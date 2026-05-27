@@ -42,3 +42,43 @@ type MemberDAO interface {
 
 func RegisterMemberDAO(impl MemberDAO) { di.Provide[MemberDAO]("member.dao", impl) }
 func GetMemberDAO() MemberDAO           { return di.Require[MemberDAO]("member.dao") }
+
+type InvitationDAO interface {
+	Create(inv *model.OrgInvitation) error
+	Update(inv *model.OrgInvitation) error
+	GetByCode(code string) (*model.OrgInvitation, error)
+	GetByID(id uint) (*model.OrgInvitation, error)
+	ListByInviter(inviterID uint, page, pageSize int) ([]model.OrgInvitation, int64, error)
+	ListByDepartment(departmentID uint, page, pageSize int) ([]model.OrgInvitation, int64, error)
+}
+
+func RegisterInvitationDAO(impl InvitationDAO) { di.Provide[InvitationDAO]("invitation.dao", impl) }
+func GetInvitationDAO() InvitationDAO           { return di.Require[InvitationDAO]("invitation.dao") }
+
+type DepartmentRoleDAO interface {
+	Assign(departmentID uint, roleIDs []uint) error
+	Revoke(departmentID uint, roleIDs []uint) error
+	GetRoleIDsByDepartmentID(departmentID uint) ([]uint, error)
+	GetRoleIDsByDepartmentIDs(departmentIDs []uint) ([]uint, error)
+}
+
+func RegisterDepartmentRoleDAO(impl DepartmentRoleDAO) {
+	di.Provide[DepartmentRoleDAO]("department_role.dao", impl)
+}
+func GetDepartmentRoleDAO() DepartmentRoleDAO {
+	return di.Require[DepartmentRoleDAO]("department_role.dao")
+}
+
+type PositionRoleDAO interface {
+	Assign(positionID uint, roleIDs []uint) error
+	Revoke(positionID uint, roleIDs []uint) error
+	GetRoleIDsByPositionID(positionID uint) ([]uint, error)
+	GetRoleIDsByPositionIDs(positionIDs []uint) ([]uint, error)
+}
+
+func RegisterPositionRoleDAO(impl PositionRoleDAO) {
+	di.Provide[PositionRoleDAO]("position_role.dao", impl)
+}
+func GetPositionRoleDAO() PositionRoleDAO {
+	return di.Require[PositionRoleDAO]("position_role.dao")
+}

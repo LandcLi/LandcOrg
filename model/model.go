@@ -41,3 +41,37 @@ type OrgMember struct {
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
+
+// OrgInvitation represents an invitation to join the organization.
+type OrgInvitation struct {
+	ID           uint      `json:"id" gorm:"primaryKey;autoIncrement"`
+	Code         string    `json:"code" gorm:"uniqueIndex;size:64;not null"`
+	DepartmentID uint      `json:"department_id" gorm:"index;not null"`
+	PositionID   uint      `json:"position_id" gorm:"default:0"`
+	InviterID    uint      `json:"inviter_id" gorm:"index;not null"`
+	InviteeID    uint      `json:"invitee_id" gorm:"index;default:0;comment:0=open invitation"`
+	Status       int       `json:"status" gorm:"default:0;comment:0=pending,1=accepted,2=expired,3=revoked"`
+	MaxUses      int       `json:"max_uses" gorm:"default:1;comment:-1=unlimited"`
+	UsedCount    int       `json:"used_count" gorm:"default:0"`
+	ExpiresAt    time.Time `json:"expires_at"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
+// DepartmentRole represents the binding between a department and a role.
+// Members of the department auto-inherit these roles.
+type DepartmentRole struct {
+	ID           uint      `json:"id" gorm:"primaryKey;autoIncrement"`
+	DepartmentID uint      `json:"department_id" gorm:"index;not null"`
+	RoleID       uint      `json:"role_id" gorm:"index;not null"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+// PositionRole represents the binding between a position and a role.
+// Users with this position auto-inherit these roles.
+type PositionRole struct {
+	ID         uint      `json:"id" gorm:"primaryKey;autoIncrement"`
+	PositionID uint      `json:"position_id" gorm:"index;not null"`
+	RoleID     uint      `json:"role_id" gorm:"index;not null"`
+	CreatedAt  time.Time `json:"created_at"`
+}
