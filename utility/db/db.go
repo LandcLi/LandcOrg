@@ -22,11 +22,18 @@ func InitDatabase(cfg *config.DatabaseConfig) {
 
 func GetDB() *gorm.DB { return database }
 
-func InitRedis(cfg *config.RedisConfig) (*redis.Client, error) {
+// InitRedis initializes the Redis connection (optional).
+// If cfg is nil or Addr is empty, Redis will not be initialized.
+func InitRedis(cfg *config.RedisConfig) {
+	if cfg == nil || cfg.Addr == "" {
+		return
+	}
 	redisClient = redis.NewClient(&redis.Options{
-		Addr: cfg.Addr, Password: cfg.Password, DB: cfg.DB,
+		Addr:     cfg.Addr,
+		Password: cfg.Password,
+		DB:       cfg.DB,
 	})
-	return redisClient, nil
 }
 
+// GetRedis returns the Redis client (may be nil if not configured).
 func GetRedis() *redis.Client { return redisClient }

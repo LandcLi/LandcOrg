@@ -45,7 +45,7 @@ func initWithConfig(cfg *config.Config, ginEngine *gin.Engine) (*gin.Engine, err
 	}
 
 	logger.InitLogger(&cfg.Log)
-	_, _ = db.InitRedis(&cfg.Redis)
+	db.InitRedis(&cfg.Redis)
 	db.InitDatabase(&cfg.Database)
 
 	ginEngine.Use(apiMiddleware.GinMiddleware())
