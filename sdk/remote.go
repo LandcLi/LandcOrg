@@ -5,8 +5,12 @@ import (
 
 	"github.com/LandcLi/LandcOrg/api/department"
 	deptV1 "github.com/LandcLi/LandcOrg/api/department/v1"
+	"github.com/LandcLi/LandcOrg/api/invitation"
+	invV1 "github.com/LandcLi/LandcOrg/api/invitation/v1"
 	"github.com/LandcLi/LandcOrg/api/member"
 	memV1 "github.com/LandcLi/LandcOrg/api/member/v1"
+	orgRole "github.com/LandcLi/LandcOrg/api/org_role"
+	orgRoleV1 "github.com/LandcLi/LandcOrg/api/org_role/v1"
 	"github.com/LandcLi/LandcOrg/api/position"
 	posV1 "github.com/LandcLi/LandcOrg/api/position/v1"
 	"github.com/LandcLi/landc-go/mvc/pkg/di"
@@ -85,4 +89,55 @@ func (r *RemoteMemberController) GetUserDepartments(ctx context.Context, req *me
 }
 func (r *RemoteMemberController) GetDepartmentMembers(ctx context.Context, req *memV1.GetDepartmentMembersRequest) (*memV1.GetDepartmentMembersResponse, error) {
 	return di.Call[memV1.GetDepartmentMembersResponse](r.client, ctx, "GetDepartmentMembers", req)
+}
+
+// --- Remote Invitation Controller ---
+
+type RemoteInvitationController struct{ client *di.ProxyClient }
+
+func NewRemoteInvitationController(baseURL string, opts ...di.RemoteOption) *RemoteInvitationController {
+	return &RemoteInvitationController{client: di.NewProxyClient(baseURL, invitation.InvitationRoutes, opts...)}
+}
+
+func (r *RemoteInvitationController) CreateInvitation(ctx context.Context, req *invV1.CreateInvitationRequest) (*invV1.CreateInvitationResponse, error) {
+	return di.Call[invV1.CreateInvitationResponse](r.client, ctx, "CreateInvitation", req)
+}
+func (r *RemoteInvitationController) AcceptInvitation(ctx context.Context, req *invV1.AcceptInvitationRequest) (*invV1.AcceptInvitationResponse, error) {
+	return di.Call[invV1.AcceptInvitationResponse](r.client, ctx, "AcceptInvitation", req)
+}
+func (r *RemoteInvitationController) RevokeInvitation(ctx context.Context, req *invV1.RevokeInvitationRequest) (*invV1.RevokeInvitationResponse, error) {
+	return di.Call[invV1.RevokeInvitationResponse](r.client, ctx, "RevokeInvitation", req)
+}
+func (r *RemoteInvitationController) ListInvitations(ctx context.Context, req *invV1.ListInvitationsRequest) (*invV1.ListInvitationsResponse, error) {
+	return di.Call[invV1.ListInvitationsResponse](r.client, ctx, "ListInvitations", req)
+}
+
+// --- Remote OrgRole Controller ---
+
+type RemoteOrgRoleController struct{ client *di.ProxyClient }
+
+func NewRemoteOrgRoleController(baseURL string, opts ...di.RemoteOption) *RemoteOrgRoleController {
+	return &RemoteOrgRoleController{client: di.NewProxyClient(baseURL, orgRole.OrgRoleRoutes, opts...)}
+}
+
+func (r *RemoteOrgRoleController) AssignDepartmentRoles(ctx context.Context, req *orgRoleV1.AssignDepartmentRolesRequest) (*orgRoleV1.AssignDepartmentRolesResponse, error) {
+	return di.Call[orgRoleV1.AssignDepartmentRolesResponse](r.client, ctx, "AssignDepartmentRoles", req)
+}
+func (r *RemoteOrgRoleController) RevokeDepartmentRoles(ctx context.Context, req *orgRoleV1.RevokeDepartmentRolesRequest) (*orgRoleV1.RevokeDepartmentRolesResponse, error) {
+	return di.Call[orgRoleV1.RevokeDepartmentRolesResponse](r.client, ctx, "RevokeDepartmentRoles", req)
+}
+func (r *RemoteOrgRoleController) GetDepartmentRoles(ctx context.Context, req *orgRoleV1.GetDepartmentRolesRequest) (*orgRoleV1.GetDepartmentRolesResponse, error) {
+	return di.Call[orgRoleV1.GetDepartmentRolesResponse](r.client, ctx, "GetDepartmentRoles", req)
+}
+func (r *RemoteOrgRoleController) AssignPositionRoles(ctx context.Context, req *orgRoleV1.AssignPositionRolesRequest) (*orgRoleV1.AssignPositionRolesResponse, error) {
+	return di.Call[orgRoleV1.AssignPositionRolesResponse](r.client, ctx, "AssignPositionRoles", req)
+}
+func (r *RemoteOrgRoleController) RevokePositionRoles(ctx context.Context, req *orgRoleV1.RevokePositionRolesRequest) (*orgRoleV1.RevokePositionRolesResponse, error) {
+	return di.Call[orgRoleV1.RevokePositionRolesResponse](r.client, ctx, "RevokePositionRoles", req)
+}
+func (r *RemoteOrgRoleController) GetPositionRoles(ctx context.Context, req *orgRoleV1.GetPositionRolesRequest) (*orgRoleV1.GetPositionRolesResponse, error) {
+	return di.Call[orgRoleV1.GetPositionRolesResponse](r.client, ctx, "GetPositionRoles", req)
+}
+func (r *RemoteOrgRoleController) GetUserInheritedRoles(ctx context.Context, req *orgRoleV1.GetUserInheritedRolesRequest) (*orgRoleV1.GetUserInheritedRolesResponse, error) {
+	return di.Call[orgRoleV1.GetUserInheritedRolesResponse](r.client, ctx, "GetUserInheritedRoles", req)
 }
