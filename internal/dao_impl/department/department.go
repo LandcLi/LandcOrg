@@ -1,29 +1,94 @@
 package department
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"time"
+
 	"github.com/LandcLi/LandcOrg/dao"
 	"github.com/LandcLi/LandcOrg/model"
 	"github.com/LandcLi/LandcOrg/utility/db"
+	"github.com/go-redis/redis/v8"
 )
 
-func init() { dao.RegisterDepartmentDAO(&deptDAOImpl{}) }
+func init() { dao.RegisterDepartmentDAO(&deptDAOImpl{redisClient: db.GetRedis()}) }
 
-type deptDAOImpl struct{}
+type deptDAOImpl struct {
+	redisClient *redis.Client
+}
 
-func (d *deptDAOImpl) Create(dept *model.Department) error    { return db.GetDB().Create(dept).Error }
-func (d *deptDAOImpl) Update(dept *model.Department) error    { return db.GetDB().Save(dept).Error }
-func (d *deptDAOImpl) Delete(id uint) error                   { return db.GetDB().Delete(&model.Department{}, id).Error }
+func (d *deptDAOImpl) Create(dept *model.Department) error { return db.GetDB().Create(dept).Error }
+
+func (d *deptDAOImpl) Update(dept *model.Department) error {
+	err := db.GetDB().Save(dept).Error
+	if err == nil {
+		d.invalidateCache(dept.ID, dept.Code)
+	}
+	return err
+}
+
+func (d *deptDAOImpl) Delete(id uint) error {
+	if d.redisClient != nil {
+		if dept, err := d.GetByID(id); err == nil {
+			defer d.invalidateCache(dept.ID, dept.Code)
+		}
+	}
+	return db.GetDB().Delete(&model.Department{}, id).Error
+}
 
 func (d *deptDAOImpl) GetByID(id uint) (*model.Department, error) {
+	if d.redisClient != nil {
+		cacheKey := fmt.Sprintf("dept:id:%d", id)
+		data, err := d.redisClient.Get(context.Background(), cacheKey).Bytes()
+		if err == nil {
+			var dept model.Department
+			if err := json.Unmarshal(data, &dept); err == nil {
+				return &dept, nil
+			}
+		}
+	}
+
 	var dept model.Department
 	err := db.GetDB().First(&dept, id).Error
-	return &dept, err
+	if err != nil {
+		return nil, err
+	}
+
+	if d.redisClient != nil {
+		cacheKey := fmt.Sprintf("dept:id:%d", id)
+		data, _ := json.Marshal(dept)
+		d.redisClient.Set(context.Background(), cacheKey, data, time.Hour)
+	}
+
+	return &dept, nil
 }
 
 func (d *deptDAOImpl) GetByCode(code string) (*model.Department, error) {
+	if d.redisClient != nil {
+		cacheKey := fmt.Sprintf("dept:code:%s", code)
+		data, err := d.redisClient.Get(context.Background(), cacheKey).Bytes()
+		if err == nil {
+			var dept model.Department
+			if err := json.Unmarshal(data, &dept); err == nil {
+				return &dept, nil
+			}
+		}
+	}
+
 	var dept model.Department
 	err := db.GetDB().Where("code = ?", code).First(&dept).Error
-	return &dept, err
+	if err != nil {
+		return nil, err
+	}
+
+	if d.redisClient != nil {
+		cacheKey := fmt.Sprintf("dept:code:%s", code)
+		data, _ := json.Marshal(dept)
+		d.redisClient.Set(context.Background(), cacheKey, data, time.Hour)
+	}
+
+	return &dept, nil
 }
 
 func (d *deptDAOImpl) GetByParentID(parentID uint) ([]model.Department, error) {
@@ -54,4 +119,15 @@ func (d *deptDAOImpl) List(page, pageSize int, parentID *uint, keyword string) (
 	}
 	err := query.Order("sort ASC").Find(&depts).Error
 	return depts, total, err
+}
+
+func (d *deptDAOImpl) invalidateCache(id uint, code string) {
+	if d.redisClient == nil {
+		return
+	}
+	ctx := context.Background()
+	d.redisClient.Del(ctx, fmt.Sprintf("dept:id:%d", id))
+	if code != "" {
+		d.redisClient.Del(ctx, fmt.Sprintf("dept:code:%s", code))
+	}
 }
