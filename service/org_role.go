@@ -1,6 +1,6 @@
 package service
 
-import "github.com/LandcLi/landc-go/mvc/pkg/di"
+import "github.com/LandcLi/landc-go/frame/pkg/di"
 
 // OrgRoleService defines the organization-driven role binding interface.
 type OrgRoleService interface {

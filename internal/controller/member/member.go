@@ -6,7 +6,7 @@ import (
 	memApi "github.com/LandcLi/LandcOrg/api/member"
 	v1 "github.com/LandcLi/LandcOrg/api/member/v1"
 	"github.com/LandcLi/LandcOrg/service"
-	"github.com/LandcLi/landc-go/mvc/pkg/di"
+	"github.com/LandcLi/landc-go/frame/pkg/di"
 )
 
 func init() { di.Provide[memApi.MemberController]("member.controller", &memCtrl{}) }

@@ -7,7 +7,7 @@ import (
 	v1 "github.com/LandcLi/LandcOrg/api/invitation/v1"
 	"github.com/LandcLi/LandcOrg/dao"
 	"github.com/LandcLi/LandcOrg/service"
-	"github.com/LandcLi/landc-go/mvc/pkg/di"
+	"github.com/LandcLi/landc-go/frame/pkg/di"
 )
 
 func init() { di.Provide[invApi.InvitationController]("invitation.controller", &invCtrl{}) }

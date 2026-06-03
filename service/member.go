@@ -3,7 +3,7 @@ package service
 import (
 	"github.com/LandcLi/LandcOrg/api/member/v1"
 	"github.com/LandcLi/LandcOrg/model"
-	"github.com/LandcLi/landc-go/mvc/pkg/di"
+	"github.com/LandcLi/landc-go/frame/pkg/di"
 )
 
 // MemberService defines the organization member business logic interface.

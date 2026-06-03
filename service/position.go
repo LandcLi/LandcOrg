@@ -2,7 +2,7 @@ package service
 
 import (
 	"github.com/LandcLi/LandcOrg/model"
-	"github.com/LandcLi/landc-go/mvc/pkg/di"
+	"github.com/LandcLi/landc-go/frame/pkg/di"
 )
 
 // PositionService defines the position business logic interface.

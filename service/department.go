@@ -3,7 +3,7 @@ package service
 import (
 	"github.com/LandcLi/LandcOrg/api/department/v1"
 	"github.com/LandcLi/LandcOrg/model"
-	"github.com/LandcLi/landc-go/mvc/pkg/di"
+	"github.com/LandcLi/landc-go/frame/pkg/di"
 )
 
 // DepartmentService defines the department business logic interface.

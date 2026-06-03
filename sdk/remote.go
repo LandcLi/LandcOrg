@@ -13,7 +13,7 @@ import (
 	orgRoleV1 "github.com/LandcLi/LandcOrg/api/org_role/v1"
 	"github.com/LandcLi/LandcOrg/api/position"
 	posV1 "github.com/LandcLi/LandcOrg/api/position/v1"
-	"github.com/LandcLi/landc-go/mvc/pkg/di"
+	"github.com/LandcLi/landc-go/frame/pkg/di"
 )
 
 // --- Remote Department Controller ---

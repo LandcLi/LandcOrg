@@ -6,7 +6,7 @@ import (
 	deptApi "github.com/LandcLi/LandcOrg/api/department"
 	v1 "github.com/LandcLi/LandcOrg/api/department/v1"
 	"github.com/LandcLi/LandcOrg/service"
-	"github.com/LandcLi/landc-go/mvc/pkg/di"
+	"github.com/LandcLi/landc-go/frame/pkg/di"
 )
 
 func init() { di.Provide[deptApi.DepartmentController]("department.controller", &deptCtrl{}) }

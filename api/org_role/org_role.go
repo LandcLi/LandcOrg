@@ -4,7 +4,7 @@ import (
 	"context"
 
 	v1 "github.com/LandcLi/LandcOrg/api/org_role/v1"
-	"github.com/LandcLi/landc-go/mvc/pkg/di"
+	"github.com/LandcLi/landc-go/frame/pkg/di"
 )
 
 // OrgRoleController defines the organization-role binding management interface.

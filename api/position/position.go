@@ -4,7 +4,7 @@ import (
 	"context"
 
 	v1 "github.com/LandcLi/LandcOrg/api/position/v1"
-	"github.com/LandcLi/landc-go/mvc/pkg/di"
+	"github.com/LandcLi/landc-go/frame/pkg/di"
 )
 
 // PositionController defines the position management interface.

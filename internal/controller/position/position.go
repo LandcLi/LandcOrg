@@ -6,7 +6,7 @@ import (
 	posApi "github.com/LandcLi/LandcOrg/api/position"
 	v1 "github.com/LandcLi/LandcOrg/api/position/v1"
 	"github.com/LandcLi/LandcOrg/service"
-	"github.com/LandcLi/landc-go/mvc/pkg/di"
+	"github.com/LandcLi/landc-go/frame/pkg/di"
 )
 
 func init() { di.Provide[posApi.PositionController]("position.controller", &posCtrl{}) }

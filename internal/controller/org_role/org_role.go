@@ -6,7 +6,7 @@ import (
 	orgRoleApi "github.com/LandcLi/LandcOrg/api/org_role"
 	v1 "github.com/LandcLi/LandcOrg/api/org_role/v1"
 	"github.com/LandcLi/LandcOrg/service"
-	"github.com/LandcLi/landc-go/mvc/pkg/di"
+	"github.com/LandcLi/landc-go/frame/pkg/di"
 )
 
 func init() { di.Provide[orgRoleApi.OrgRoleController]("org_role.controller", &orgRoleCtrl{}) }
