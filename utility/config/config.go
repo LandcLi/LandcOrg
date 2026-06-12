@@ -15,7 +15,7 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Port            string `yaml:"port"`
+	Port            int    `yaml:"port"`
 	GinMode         string `yaml:"gin_mode"`
 	EnableCORS      bool   `yaml:"enable_cors"`
 	UseDefaultRoute bool   `yaml:"use_default_route"`

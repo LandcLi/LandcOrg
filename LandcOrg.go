@@ -1,73 +1,58 @@
 package landcorg
 
 import (
+	"fmt"
+
 	"github.com/LandcLi/LandcOrg/api"
 	_ "github.com/LandcLi/LandcOrg/internal"
 	"github.com/LandcLi/LandcOrg/utility/config"
 	"github.com/LandcLi/LandcOrg/utility/db"
 	"github.com/LandcLi/LandcOrg/utility/logger"
 	apiMiddleware "github.com/LandcLi/landc-go/api/middleware/gin"
+	frameconfig "github.com/LandcLi/landc-go/frame/pkg/config"
+	"github.com/LandcLi/landc-go/frame/pkg/web"
 	ginLogger "github.com/LandcLi/landc-go/log/adapter/gin"
 	"github.com/gin-gonic/gin"
 )
 
 // InitDefault initializes from config file path.
-func InitDefault(configPath string) (*gin.Engine, error) {
+func InitDefault(configPath string) (*web.Server, error) {
+	if err := frameconfig.InitGlobalConfigWithPath(configPath); err != nil {
+		return nil, fmt.Errorf("加载框架配置失败: %w", err)
+	}
 	cfg, err := config.LoadConfig(configPath)
 	if err != nil {
 		return nil, err
 	}
-	return initWithConfig(cfg, nil)
+	return initWithConfig(cfg)
 }
 
 // InitWithConfig initializes from config object.
-func InitWithConfig(cfg *config.Config) (*gin.Engine, error) {
-	return initWithConfig(cfg, nil)
+func InitWithConfig(cfg *config.Config) (*web.Server, error) {
+	return initWithConfig(cfg)
 }
 
-// InitWithConfigAndGin initializes with existing Gin engine.
-func InitWithConfigAndGin(cfg *config.Config, ginEngine *gin.Engine) error {
-	_, err := initWithConfig(cfg, ginEngine)
-	return err
-}
-
-func initWithConfig(cfg *config.Config, ginEngine *gin.Engine) (*gin.Engine, error) {
-	if ginEngine == nil {
-		ginEngine = gin.Default()
-	}
+func initWithConfig(cfg *config.Config) (*web.Server, error) {
+	// 使用框架 web.Server，自动注册健康检查和超时中间件
+	server := web.New()
+	engine := server.Engine()
 
 	if cfg.Server.GinMode != "" {
 		gin.SetMode(cfg.Server.GinMode)
-	}
-
-	if cfg.Server.EnableCORS {
-		ginEngine.Use(corsMiddleware())
 	}
 
 	logger.InitLogger(&cfg.Log)
 	db.InitRedis(&cfg.Redis)
 	db.InitDatabase(&cfg.Database)
 
-	ginEngine.Use(apiMiddleware.GinMiddleware())
-	ginLogger.UseWithGin(ginEngine, logger.GetLogger())
+	// 应用 api 层面的中间件
+	engine.Use(apiMiddleware.GinMiddleware())
+	ginLogger.UseWithGin(engine, logger.GetLogger())
 
+	// 注册业务路由
 	if cfg.Server.UseDefaultRoute {
-		api.RegisterDefaultRoutes(ginEngine)
+		api.RegisterDefaultRoutes(engine)
 	}
 
-	return ginEngine, nil
-}
-
-func corsMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(204)
-			return
-		}
-		c.Next()
-	}
+	return server, nil
 }
