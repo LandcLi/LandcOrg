@@ -15,24 +15,32 @@ type deptCtrl struct{}
 
 func (c *deptCtrl) CreateDepartment(ctx context.Context, req *v1.CreateDepartmentRequest) (*v1.CreateDepartmentResponse, error) {
 	dept, err := service.GetDepartmentService().CreateDepartment(req.Name, req.Code, req.ParentID, req.Sort, req.Leader, req.Description)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	return &v1.CreateDepartmentResponse{ID: dept.ID, Name: dept.Name, Code: dept.Code}, nil
 }
 
 func (c *deptCtrl) UpdateDepartment(ctx context.Context, req *v1.UpdateDepartmentRequest) (*v1.UpdateDepartmentResponse, error) {
 	err := service.GetDepartmentService().UpdateDepartment(req.ID, req.Name, req.Code, req.ParentID, req.Sort, req.Leader, req.Description, req.Status)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	return &v1.UpdateDepartmentResponse{Success: true}, nil
 }
 
 func (c *deptCtrl) DeleteDepartment(ctx context.Context, req *v1.DeleteDepartmentRequest) (*v1.DeleteDepartmentResponse, error) {
-	if err := service.GetDepartmentService().DeleteDepartment(req.ID); err != nil { return nil, err }
+	if err := service.GetDepartmentService().DeleteDepartment(req.ID); err != nil {
+		return nil, err
+	}
 	return &v1.DeleteDepartmentResponse{Success: true}, nil
 }
 
 func (c *deptCtrl) GetDepartment(ctx context.Context, req *v1.GetDepartmentRequest) (*v1.GetDepartmentResponse, error) {
 	dept, err := service.GetDepartmentService().GetDepartment(req.ID)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	return &v1.GetDepartmentResponse{
 		ID: dept.ID, Name: dept.Name, Code: dept.Code, ParentID: dept.ParentID,
 		Path: dept.Path, Level: dept.Level, Sort: dept.Sort, Leader: dept.Leader,
@@ -42,13 +50,17 @@ func (c *deptCtrl) GetDepartment(ctx context.Context, req *v1.GetDepartmentReque
 
 func (c *deptCtrl) GetDepartmentTree(ctx context.Context, req *v1.GetDepartmentTreeRequest) (*v1.GetDepartmentTreeResponse, error) {
 	tree, err := service.GetDepartmentService().GetDepartmentTree(req.RootID)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	return &v1.GetDepartmentTreeResponse{Tree: tree}, nil
 }
 
 func (c *deptCtrl) ListDepartments(ctx context.Context, req *v1.ListDepartmentsRequest) (*v1.ListDepartmentsResponse, error) {
 	depts, total, err := service.GetDepartmentService().ListDepartments(req.Page, req.PageSize, req.ParentID, req.Keyword)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	list := make([]v1.GetDepartmentResponse, 0, len(depts))
 	for _, d := range depts {
 		list = append(list, v1.GetDepartmentResponse{

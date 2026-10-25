@@ -36,12 +36,16 @@ func (c *memCtrl) UpdateMember(ctx context.Context, req *v1.UpdateMemberRequest)
 
 func (c *memCtrl) GetUserDepartments(ctx context.Context, req *v1.GetUserDepartmentsRequest) (*v1.GetUserDepartmentsResponse, error) {
 	memberships, err := service.GetMemberService().GetUserDepartments(req.UserID)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	return &v1.GetUserDepartmentsResponse{Memberships: memberships}, nil
 }
 
 func (c *memCtrl) GetDepartmentMembers(ctx context.Context, req *v1.GetDepartmentMembersRequest) (*v1.GetDepartmentMembersResponse, error) {
 	members, total, err := service.GetMemberService().GetDepartmentMembers(req.DepartmentID, req.Page, req.PageSize)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	return &v1.GetDepartmentMembersResponse{Total: total, Members: members}, nil
 }

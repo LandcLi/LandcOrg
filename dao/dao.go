@@ -17,7 +17,7 @@ type DepartmentDAO interface {
 }
 
 func RegisterDepartmentDAO(impl DepartmentDAO) { di.Provide[DepartmentDAO]("department.dao", impl) }
-func GetDepartmentDAO() DepartmentDAO           { return di.Require[DepartmentDAO]("department.dao") }
+func GetDepartmentDAO() DepartmentDAO          { return di.Require[DepartmentDAO]("department.dao") }
 
 type PositionDAO interface {
 	Create(pos *model.Position) error
@@ -29,7 +29,7 @@ type PositionDAO interface {
 }
 
 func RegisterPositionDAO(impl PositionDAO) { di.Provide[PositionDAO]("position.dao", impl) }
-func GetPositionDAO() PositionDAO           { return di.Require[PositionDAO]("position.dao") }
+func GetPositionDAO() PositionDAO          { return di.Require[PositionDAO]("position.dao") }
 
 type MemberDAO interface {
 	Create(member *model.OrgMember) error
@@ -41,7 +41,7 @@ type MemberDAO interface {
 }
 
 func RegisterMemberDAO(impl MemberDAO) { di.Provide[MemberDAO]("member.dao", impl) }
-func GetMemberDAO() MemberDAO           { return di.Require[MemberDAO]("member.dao") }
+func GetMemberDAO() MemberDAO          { return di.Require[MemberDAO]("member.dao") }
 
 type InvitationDAO interface {
 	Create(inv *model.OrgInvitation) error
@@ -53,7 +53,7 @@ type InvitationDAO interface {
 }
 
 func RegisterInvitationDAO(impl InvitationDAO) { di.Provide[InvitationDAO]("invitation.dao", impl) }
-func GetInvitationDAO() InvitationDAO           { return di.Require[InvitationDAO]("invitation.dao") }
+func GetInvitationDAO() InvitationDAO          { return di.Require[InvitationDAO]("invitation.dao") }
 
 type DepartmentRoleDAO interface {
 	Assign(departmentID uint, roleIDs []uint) error
