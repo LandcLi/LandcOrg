@@ -6,7 +6,7 @@ toolchain go1.26.5
 
 require (
 	github.com/LandcLi/landc-go/api v0.5.0
-	github.com/LandcLi/landc-go/frame v0.8.4
+	github.com/LandcLi/landc-go/frame v0.8.5
 	github.com/LandcLi/landc-go/log v0.5.0
 	github.com/gin-gonic/gin v1.11.0
 	gopkg.in/yaml.v2 v2.4.0
