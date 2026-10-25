@@ -110,6 +110,26 @@ landcorg.InitWithConfigAndGin(orgCfg, ginEngine)
 
 库模式只注册控制器，不会创建 engine、不会调用 `Run`，宿主可继续追加自有路由。
 
+### 4. Docker 部署
+
+```bash
+docker build -t landc-org:0.1.0 .
+
+docker run -d --name landc-org \
+  -p 8083:8083 \
+  -v "$(pwd)/data:/app/data" \
+  landc-org:0.1.0
+```
+
+镜像要点：
+
+- 多阶段构建，产物是 `CGO_ENABLED=0` 静态二进制（纯 Go SQLite 驱动，运行阶段无需 gcc）
+- 以非 root 用户 `app` 运行，`/app/data` 与 `/app/logs` 已预建并授权
+- 内置 `HEALTHCHECK` 打 `/health`，可直接被 compose / k8s 探活
+- 时区固定 `Asia/Shanghai`（`tzdata` 已安装）
+
+挂载 `data/` 是关键：不挂载时容器重建会丢掉 SQLite 库。
+
 
 ## 使用 SDK（远程调用模式）
 
