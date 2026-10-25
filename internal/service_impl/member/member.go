@@ -55,6 +55,18 @@ func (s *memberServiceImpl) GetUserDepartments(userID uint) ([]v1.MemberInfo, er
 		return nil, err
 	}
 
+	// 批量预取部门与岗位，避免循环内逐个 GetByID 造成 N+1。
+	deptIDs := make([]uint, 0, len(members))
+	posIDs := make([]uint, 0, len(members))
+	for _, m := range members {
+		deptIDs = append(deptIDs, m.DepartmentID)
+		if m.PositionID > 0 {
+			posIDs = append(posIDs, m.PositionID)
+		}
+	}
+	deptNames := departmentNameMap(deptIDs)
+	posNames := positionNameMap(posIDs)
+
 	result := make([]v1.MemberInfo, 0, len(members))
 	for _, m := range members {
 		info := v1.MemberInfo{
@@ -64,17 +76,9 @@ func (s *memberServiceImpl) GetUserDepartments(userID uint) ([]v1.MemberInfo, er
 			IsLeader:     m.IsLeader,
 			JoinedAt:     m.JoinedAt,
 		}
-		// Enrich with department name
-		dept, _ := dao.GetDepartmentDAO().GetByID(m.DepartmentID)
-		if dept != nil {
-			info.DepartmentName = dept.Name
-		}
-		// Enrich with position name
+		info.DepartmentName = deptNames[m.DepartmentID]
 		if m.PositionID > 0 {
-			pos, _ := dao.GetPositionDAO().GetByID(m.PositionID)
-			if pos != nil {
-				info.PositionName = pos.Name
-			}
+			info.PositionName = posNames[m.PositionID]
 		}
 		result = append(result, info)
 	}
@@ -94,6 +98,15 @@ func (s *memberServiceImpl) GetDepartmentMembers(departmentID uint, page, pageSi
 		return nil, 0, err
 	}
 
+	// 批量预取岗位名，消除 N+1。
+	posIDs := make([]uint, 0, len(members))
+	for _, m := range members {
+		if m.PositionID > 0 {
+			posIDs = append(posIDs, m.PositionID)
+		}
+	}
+	posNames := positionNameMap(posIDs)
+
 	result := make([]v1.MemberInfo, 0, len(members))
 	for _, m := range members {
 		info := v1.MemberInfo{
@@ -104,14 +117,43 @@ func (s *memberServiceImpl) GetDepartmentMembers(departmentID uint, page, pageSi
 			JoinedAt:     m.JoinedAt,
 		}
 		if m.PositionID > 0 {
-			pos, _ := dao.GetPositionDAO().GetByID(m.PositionID)
-			if pos != nil {
-				info.PositionName = pos.Name
-			}
+			info.PositionName = posNames[m.PositionID]
 		}
 		result = append(result, info)
 	}
 	return result, total, nil
+}
+
+// departmentNameMap 批量查部门名，返回 id -> name 的映射（缺失的 id 为空串）。
+func departmentNameMap(ids []uint) map[uint]string {
+	m := make(map[uint]string, len(ids))
+	if len(ids) == 0 {
+		return m
+	}
+	depts, err := dao.GetDepartmentDAO().GetByIDs(ids)
+	if err != nil {
+		return m
+	}
+	for _, d := range depts {
+		m[d.ID] = d.Name
+	}
+	return m
+}
+
+// positionNameMap 批量查岗位名，返回 id -> name 的映射。
+func positionNameMap(ids []uint) map[uint]string {
+	m := make(map[uint]string, len(ids))
+	if len(ids) == 0 {
+		return m
+	}
+	positions, err := dao.GetPositionDAO().GetByIDs(ids)
+	if err != nil {
+		return m
+	}
+	for _, p := range positions {
+		m[p.ID] = p.Name
+	}
+	return m
 }
 
 func (s *memberServiceImpl) GetMember(userID, departmentID uint) (*model.OrgMember, error) {

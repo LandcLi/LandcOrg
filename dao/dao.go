@@ -10,6 +10,9 @@ type DepartmentDAO interface {
 	Update(dept *model.Department) error
 	Delete(id uint) error
 	GetByID(id uint) (*model.Department, error)
+	// GetByIDs 批量按主键查询，返回的切片与入参顺序无关（调用方自行建 map）。
+	// 用于成员列表等场景把「逐个 GetByID」收敛为一次 IN 查询，消除 N+1。
+	GetByIDs(ids []uint) ([]model.Department, error)
 	GetByCode(code string) (*model.Department, error)
 	GetByParentID(parentID uint) ([]model.Department, error)
 	GetAll() ([]model.Department, error)
@@ -24,6 +27,8 @@ type PositionDAO interface {
 	Update(pos *model.Position) error
 	Delete(id uint) error
 	GetByID(id uint) (*model.Position, error)
+	// GetByIDs 批量按主键查询，用于消除成员列表的 N+1。
+	GetByIDs(ids []uint) ([]model.Position, error)
 	GetByCode(code string) (*model.Position, error)
 	List(page, pageSize int, keyword string) ([]model.Position, int64, error)
 }

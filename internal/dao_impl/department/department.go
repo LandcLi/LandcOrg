@@ -62,6 +62,17 @@ func (d *deptDAOImpl) GetByID(id uint) (*model.Department, error) {
 	return &dept, nil
 }
 
+// GetByIDs 批量按主键查询，一次 IN 查询替代逐个 GetByID，消除成员列表 N+1。
+// 空 ids 直接返回空切片（不查库）。
+func (d *deptDAOImpl) GetByIDs(ids []uint) ([]model.Department, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	var depts []model.Department
+	err := db.GetDB().Where("id IN ?", ids).Find(&depts).Error
+	return depts, err
+}
+
 func (d *deptDAOImpl) GetByCode(code string) (*model.Department, error) {
 	if db.GetRedis() != nil {
 		cacheKey := fmt.Sprintf("dept:code:%s", code)

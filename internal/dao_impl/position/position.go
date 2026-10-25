@@ -20,6 +20,16 @@ func (d *posDAOImpl) GetByID(id uint) (*model.Position, error) {
 	return &pos, err
 }
 
+// GetByIDs 批量按主键查询，一次 IN 查询替代逐个 GetByID。
+func (d *posDAOImpl) GetByIDs(ids []uint) ([]model.Position, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	var positions []model.Position
+	err := db.GetDB().Where("id IN ?", ids).Find(&positions).Error
+	return positions, err
+}
+
 func (d *posDAOImpl) GetByCode(code string) (*model.Position, error) {
 	var pos model.Position
 	err := db.GetDB().Where("code = ?", code).First(&pos).Error

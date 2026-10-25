@@ -50,16 +50,29 @@ func setupSQLiteEnv(t *testing.T) *config.Config {
 		t.Fatalf("write config: %v", err)
 	}
 
-	if err := frameconfig.InitGlobalConfigWithPath(configPath); err != nil {
-		t.Fatalf("init framework config: %v", err)
-	}
+	resetFramework(t, configPath)
 	t.Cleanup(func() { _ = framedb.Close() })
 
-	cfg, err := config.LoadConfig(configPath)
+	return config.FromFramework(frameconfig.GetConfig())
+}
+
+// resetFramework 把框架全局配置与全局 DB 重置到指定配置文件。
+//
+// 关键：frameconfig.InitGlobalConfigWithPath 与 framedb.InitGlobalDBWithDefault
+// 都是 once 语义（已初始化则跳过），而测试要各自用独立 SQLite 文件。若不显式
+// 重置，第二个测试会继续读到第一个测试的（已随 t.TempDir 删除的）DB 文件 → 500。
+// 这里先关闭全局 DB（置 nil），再用 InitGlobalConfigWithConfig（无条件覆盖）切到新配置。
+func resetFramework(t *testing.T, configPath string) {
+	t.Helper()
+	_ = framedb.Close()
+
+	fc, err := frameconfig.LoadConfigFromFile(configPath)
 	if err != nil {
-		t.Fatalf("load org config: %v", err)
+		t.Fatalf("load framework config: %v", err)
 	}
-	return cfg
+	if err := frameconfig.InitGlobalConfigWithConfig(fc); err != nil {
+		t.Fatalf("init framework config: %v", err)
+	}
 }
 
 // TestSQLiteSchemaCreated 验证 auto_migrate 建出了组织域六张表。

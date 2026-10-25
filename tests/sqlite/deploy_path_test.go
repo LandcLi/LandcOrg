@@ -53,6 +53,9 @@ func TestInitDefaultRegistersBusinessRoutes(t *testing.T) {
 	if err := os.WriteFile(cfgPath, []byte(fmt.Sprintf(deployConfigTemplate, filepath.ToSlash(dbPath))), 0o644); err != nil {
 		t.Fatalf("write config: %v", err)
 	}
+	// InitDefault 内部走 InitGlobalConfigWithPath（once 语义），若全局配置已被前序
+	// 测试占用则不会重载，导致连到已删除的旧 DB。先显式重置到本测试的配置。
+	resetFramework(t, cfgPath)
 	t.Cleanup(func() { _ = framedb.Close() })
 
 	server, err := landcorg.InitDefault(cfgPath)
@@ -122,6 +125,7 @@ func TestInvalidRequestRejected(t *testing.T) {
 	if err := os.WriteFile(cfgPath, []byte(fmt.Sprintf(deployConfigTemplate, filepath.ToSlash(dbPath))), 0o644); err != nil {
 		t.Fatalf("write config: %v", err)
 	}
+	resetFramework(t, cfgPath)
 	t.Cleanup(func() { _ = framedb.Close() })
 
 	server, err := landcorg.InitDefault(cfgPath)
