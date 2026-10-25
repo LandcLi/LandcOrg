@@ -5,7 +5,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/LandcLi/landc-go/frame/pkg/di"
 	"github.com/LandcLi/landc-go/frame/pkg/web"
 
 	"github.com/LandcLi/LandcOrg/api/department"
@@ -15,6 +14,16 @@ import (
 	"github.com/LandcLi/LandcOrg/api/position"
 )
 
+// 路由声明的唯一来源是各请求结构体上的 meta.Meta 标签。
+//
+// 服务端注册（web.RegisterHandler）与远程 SDK（di.ProxyClient）读取的是
+// 同一份声明：前者反射出 path/method 生成路由，后者反射出 path/method 拼请求。
+// 因此不存在「服务端与 SDK 各写一份路由、改一处漏一处」的漂移可能。
+//
+// 历史上本项目用 api/<模块>/XxxRoutes 变量集中声明路由，并通过注册选项
+// 覆盖到框架上。那种做法让 SDK 的 ProxyClient 拿不到路由（它只认
+// meta.Meta，缺失时回退到 "/+小写方法名"），导致远程调用全部 404。
+
 // RegisterDefaultRoutes 把本系统全部控制器注册到 server（独立部署使用）。
 // 健康检查由框架按 server.use_default_routes 自动注册。
 func RegisterDefaultRoutes(server *web.Server) error {
@@ -22,21 +31,11 @@ func RegisterDefaultRoutes(server *web.Server) error {
 		name string
 		fn   func() error
 	}{
-		{"department", func() error {
-			return server.RegisterHandler(department.GetDepartmentController(), optionsFrom(department.DepartmentRoutes)...)
-		}},
-		{"position", func() error {
-			return server.RegisterHandler(position.GetPositionController(), optionsFrom(position.PositionRoutes)...)
-		}},
-		{"member", func() error {
-			return server.RegisterHandler(member.GetMemberController(), optionsFrom(member.MemberRoutes)...)
-		}},
-		{"invitation", func() error {
-			return server.RegisterHandler(invitation.GetInvitationController(), optionsFrom(invitation.InvitationRoutes)...)
-		}},
-		{"org_role", func() error {
-			return server.RegisterHandler(org_role.GetOrgRoleController(), optionsFrom(org_role.OrgRoleRoutes)...)
-		}},
+		{"department", func() error { return server.RegisterHandler(department.GetDepartmentController()) }},
+		{"position", func() error { return server.RegisterHandler(position.GetPositionController()) }},
+		{"member", func() error { return server.RegisterHandler(member.GetMemberController()) }},
+		{"invitation", func() error { return server.RegisterHandler(invitation.GetInvitationController()) }},
+		{"org_role", func() error { return server.RegisterHandler(org_role.GetOrgRoleController()) }},
 	}
 
 	for _, r := range registrations {
@@ -55,23 +54,23 @@ func RegisterHandlers(router gin.IRouter) error {
 		fn   func() error
 	}{
 		{"department", func() error {
-			_, err := web.RegisterHandlers(router, department.GetDepartmentController(), optionsFrom(department.DepartmentRoutes)...)
+			_, err := web.RegisterHandlers(router, department.GetDepartmentController())
 			return err
 		}},
 		{"position", func() error {
-			_, err := web.RegisterHandlers(router, position.GetPositionController(), optionsFrom(position.PositionRoutes)...)
+			_, err := web.RegisterHandlers(router, position.GetPositionController())
 			return err
 		}},
 		{"member", func() error {
-			_, err := web.RegisterHandlers(router, member.GetMemberController(), optionsFrom(member.MemberRoutes)...)
+			_, err := web.RegisterHandlers(router, member.GetMemberController())
 			return err
 		}},
 		{"invitation", func() error {
-			_, err := web.RegisterHandlers(router, invitation.GetInvitationController(), optionsFrom(invitation.InvitationRoutes)...)
+			_, err := web.RegisterHandlers(router, invitation.GetInvitationController())
 			return err
 		}},
 		{"org_role", func() error {
-			_, err := web.RegisterHandlers(router, org_role.GetOrgRoleController(), optionsFrom(org_role.OrgRoleRoutes)...)
+			_, err := web.RegisterHandlers(router, org_role.GetOrgRoleController())
 			return err
 		}},
 	}
@@ -82,18 +81,4 @@ func RegisterHandlers(router gin.IRouter) error {
 		}
 	}
 	return nil
-}
-
-// optionsFrom 把既有的 di.Routes 路由表转换成框架的注册选项。
-//
-// 本项目的路由定义历史上保存在 api/<模块>/Routes 变量中（SDK 与文档曾依赖它），
-// 而框架以 meta.Meta 标签或注册选项为准。这里复用既有路由表作为运行时覆盖，
-// 既不必给数十个请求结构体补标签，也避免维护「两份路由定义」造成漂移。
-func optionsFrom(routes di.Routes) []web.RegisterOption {
-	opts := make([]web.RegisterOption, 0, len(routes)*2)
-	for methodName, route := range routes {
-		opts = append(opts, web.WithMethodPath(methodName, route.Path))
-		opts = append(opts, web.WithMethodHTTPMethod(methodName, route.Method))
-	}
-	return opts
 }

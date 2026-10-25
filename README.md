@@ -113,12 +113,12 @@ landcorg.InitWithConfigAndGin(orgCfg, ginEngine)
 ### 4. Docker 部署
 
 ```bash
-docker build -t landc-org:0.1.0 .
+docker build -t landc-org:0.1.1 .
 
 docker run -d --name landc-org \
   -p 8083:8083 \
   -v "$(pwd)/data:/app/data" \
-  landc-org:0.1.0
+  landc-org:0.1.1
 ```
 
 镜像要点：

@@ -1,9 +1,14 @@
 package v1
 
+import (
+	"github.com/LandcLi/landc-go/frame/pkg/meta"
+)
+
 import "time"
 
 // AddMemberRequest adds a user to a department.
 type AddMemberRequest struct {
+	meta.Meta    `path:"/api/member/add" method:"POST"`
 	UserID       uint `json:"user_id" binding:"required"`
 	DepartmentID uint `json:"department_id" binding:"required"`
 	PositionID   uint `json:"position_id"`
@@ -16,6 +21,7 @@ type AddMemberResponse struct {
 
 // RemoveMemberRequest removes a user from a department.
 type RemoveMemberRequest struct {
+	meta.Meta    `path:"/api/member/remove" method:"POST"`
 	UserID       uint `json:"user_id" binding:"required"`
 	DepartmentID uint `json:"department_id" binding:"required"`
 }
@@ -26,6 +32,7 @@ type RemoveMemberResponse struct {
 
 // UpdateMemberRequest updates a member's position or leader status.
 type UpdateMemberRequest struct {
+	meta.Meta    `path:"/api/member/update" method:"POST"`
 	UserID       uint  `json:"user_id" binding:"required"`
 	DepartmentID uint  `json:"department_id" binding:"required"`
 	PositionID   *uint `json:"position_id"`
@@ -38,7 +45,8 @@ type UpdateMemberResponse struct {
 
 // GetUserDepartmentsRequest gets all departments a user belongs to.
 type GetUserDepartmentsRequest struct {
-	UserID uint `json:"user_id" binding:"required"`
+	meta.Meta `path:"/api/member/get-user-departments" method:"POST"`
+	UserID    uint `json:"user_id" binding:"required"`
 }
 
 // MemberInfo represents a member's organization info.
@@ -58,6 +66,7 @@ type GetUserDepartmentsResponse struct {
 
 // GetDepartmentMembersRequest gets all members of a department.
 type GetDepartmentMembersRequest struct {
+	meta.Meta    `path:"/api/member/get-department-members" method:"POST"`
 	DepartmentID uint `json:"department_id" binding:"required"`
 	Page         int  `json:"page"`
 	PageSize     int  `json:"page_size"`

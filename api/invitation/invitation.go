@@ -15,13 +15,6 @@ type InvitationController interface {
 	ListInvitations(ctx context.Context, req *v1.ListInvitationsRequest) (*v1.ListInvitationsResponse, error)
 }
 
-var InvitationRoutes = di.Routes{
-	"CreateInvitation": {Method: "POST", Path: "/api/invitation/create"},
-	"AcceptInvitation": {Method: "POST", Path: "/api/invitation/accept"},
-	"RevokeInvitation": {Method: "POST", Path: "/api/invitation/revoke"},
-	"ListInvitations":  {Method: "POST", Path: "/api/invitation/list"},
-}
-
 var InvitationGateway = di.NewGateway[InvitationController]("invitation.controller")
 
 func GetInvitationController() InvitationController {

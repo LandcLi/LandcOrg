@@ -9,14 +9,22 @@
 #     driver: "mysql"
 #     dsn: "root:password@tcp(127.0.0.1:3306)/landc_org?charset=utf8mb4&parseTime=True&loc=Local"
 #     auto_migrate: false        # 生产改由 sqls/init.sql 建表
+#
+# 注意：配置格式由框架（landc-go/frame/pkg/config）独占解析，本系统只读取
+# 其中一部分字段。下面标注了每一项由谁消费，避免「写了却不生效」的困惑。
 
 server:
   # 监听地址：框架按 addr:port 组合（addr 为空时回落到 :8080）
   addr: "0.0.0.0"
   port: 8083
-  gin_mode: "debug"
-  enable_cors: true
-  use_default_route: true
+
+  # 是否注册本系统自带的控制器路由（框架字段，默认 true）
+  # 置为 false 时只保留健康检查端点，通常仅用于「本系统只作为库被宿主嵌入」的场景。
+  use_default_routes: true
+
+  # 健康检查端点：/health（存活）、/ready（就绪），默认开启
+  health_check:
+    enabled: true
 
 # 数据库配置：默认 SQLite（纯 Go 驱动，无需 CGO / gcc / 外部服务）
 database:
@@ -31,7 +39,15 @@ database:
 #   password: ""
 #   db: 0
 
+# 日志（框架字段）
 log:
   level: "debug"
   output: "console"
-  file: "logs/org.log"
+
+# 框架未定义的业务自定义配置放在 other 段，本系统按路径读取
+other:
+  server:
+    # gin 运行模式：debug / release / test
+    gin_mode: "debug"
+    # 是否启用 CORS 中间件
+    enable_cors: true

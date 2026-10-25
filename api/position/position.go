@@ -16,14 +16,6 @@ type PositionController interface {
 	ListPositions(ctx context.Context, req *v1.ListPositionsRequest) (*v1.ListPositionsResponse, error)
 }
 
-var PositionRoutes = di.Routes{
-	"CreatePosition": {Method: "POST", Path: "/api/position/create"},
-	"UpdatePosition": {Method: "POST", Path: "/api/position/update"},
-	"DeletePosition": {Method: "POST", Path: "/api/position/delete"},
-	"GetPosition":    {Method: "POST", Path: "/api/position/get"},
-	"ListPositions":  {Method: "POST", Path: "/api/position/list"},
-}
-
 var PositionGateway = di.NewGateway[PositionController]("position.controller")
 
 func GetPositionController() PositionController {

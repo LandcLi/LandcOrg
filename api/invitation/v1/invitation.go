@@ -1,17 +1,22 @@
 package v1
 
+import (
+	"github.com/LandcLi/landc-go/frame/pkg/meta"
+)
+
 import "time"
 
 // --- Invitation API ---
 
 // CreateInvitationRequest creates an invitation to join a department.
 type CreateInvitationRequest struct {
-	InviterID    uint `json:"inviter_id" binding:"required"`
-	DepartmentID uint `json:"department_id" binding:"required"`
-	PositionID   uint `json:"position_id"`
-	InviteeID    uint `json:"invitee_id"`
-	MaxUses      int  `json:"max_uses"`
-	ExpiresInHours int `json:"expires_in_hours"`
+	meta.Meta      `path:"/api/invitation/create" method:"POST"`
+	InviterID      uint `json:"inviter_id" binding:"required"`
+	DepartmentID   uint `json:"department_id" binding:"required"`
+	PositionID     uint `json:"position_id"`
+	InviteeID      uint `json:"invitee_id"`
+	MaxUses        int  `json:"max_uses"`
+	ExpiresInHours int  `json:"expires_in_hours"`
 }
 
 type CreateInvitationResponse struct {
@@ -22,8 +27,9 @@ type CreateInvitationResponse struct {
 
 // AcceptInvitationRequest accepts an invitation by code.
 type AcceptInvitationRequest struct {
-	UserID uint   `json:"user_id" binding:"required"`
-	Code   string `json:"code" binding:"required"`
+	meta.Meta `path:"/api/invitation/accept" method:"POST"`
+	UserID    uint   `json:"user_id" binding:"required"`
+	Code      string `json:"code" binding:"required"`
 }
 
 type AcceptInvitationResponse struct {
@@ -33,6 +39,7 @@ type AcceptInvitationResponse struct {
 
 // RevokeInvitationRequest revokes an invitation.
 type RevokeInvitationRequest struct {
+	meta.Meta    `path:"/api/invitation/revoke" method:"POST"`
 	InviterID    uint `json:"inviter_id" binding:"required"`
 	InvitationID uint `json:"invitation_id" binding:"required"`
 }
@@ -43,6 +50,7 @@ type RevokeInvitationResponse struct {
 
 // ListInvitationsRequest lists invitations created by a user.
 type ListInvitationsRequest struct {
+	meta.Meta `path:"/api/invitation/list" method:"POST"`
 	InviterID uint `json:"inviter_id" binding:"required"`
 	Page      int  `json:"page"`
 	PageSize  int  `json:"page_size"`

@@ -18,16 +18,6 @@ type OrgRoleController interface {
 	GetUserInheritedRoles(ctx context.Context, req *v1.GetUserInheritedRolesRequest) (*v1.GetUserInheritedRolesResponse, error)
 }
 
-var OrgRoleRoutes = di.Routes{
-	"AssignDepartmentRoles": {Method: "POST", Path: "/api/org-role/assign-department-roles"},
-	"RevokeDepartmentRoles": {Method: "POST", Path: "/api/org-role/revoke-department-roles"},
-	"GetDepartmentRoles":    {Method: "POST", Path: "/api/org-role/get-department-roles"},
-	"AssignPositionRoles":   {Method: "POST", Path: "/api/org-role/assign-position-roles"},
-	"RevokePositionRoles":   {Method: "POST", Path: "/api/org-role/revoke-position-roles"},
-	"GetPositionRoles":      {Method: "POST", Path: "/api/org-role/get-position-roles"},
-	"GetUserInheritedRoles": {Method: "POST", Path: "/api/org-role/get-user-inherited-roles"},
-}
-
 var OrgRoleGateway = di.NewGateway[OrgRoleController]("org_role.controller")
 
 func GetOrgRoleController() OrgRoleController {

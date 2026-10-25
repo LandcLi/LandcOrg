@@ -20,15 +20,15 @@ import (
 )
 
 // InitDefault 从配置文件路径初始化，返回 web.Server。
+//
+// 配置只解析一次：框架加载后转成本系统视图（config.FromFramework），
+// 不再让本系统用自己的 yaml 结构重复解析同一份文件 —— 两套 tag 曾导致
+// use_default_route / use_default_routes 字段名漂移，业务路由静默不注册。
 func InitDefault(configPath string) (*web.Server, error) {
 	if err := frameconfig.InitGlobalConfigWithPath(configPath); err != nil {
 		return nil, fmt.Errorf("加载框架配置失败: %w", err)
 	}
-	cfg, err := config.LoadConfig(configPath)
-	if err != nil {
-		return nil, err
-	}
-	return InitWithConfig(cfg)
+	return InitWithConfig(config.FromFramework(frameconfig.GetConfig()))
 }
 
 // InitWithConfig 从配置对象初始化，返回 web.Server。

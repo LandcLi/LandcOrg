@@ -1,7 +1,12 @@
 package v1
 
+import (
+	"github.com/LandcLi/landc-go/frame/pkg/meta"
+)
+
 // CreatePositionRequest creates a new position.
 type CreatePositionRequest struct {
+	meta.Meta   `path:"/api/position/create" method:"POST"`
 	Name        string `json:"name" binding:"required"`
 	Code        string `json:"code" binding:"required"`
 	Level       int    `json:"level"`
@@ -15,6 +20,7 @@ type CreatePositionResponse struct {
 }
 
 type UpdatePositionRequest struct {
+	meta.Meta   `path:"/api/position/update" method:"POST"`
 	ID          uint   `json:"id" binding:"required"`
 	Name        string `json:"name"`
 	Code        string `json:"code"`
@@ -28,7 +34,8 @@ type UpdatePositionResponse struct {
 }
 
 type DeletePositionRequest struct {
-	ID uint `json:"id" binding:"required"`
+	meta.Meta `path:"/api/position/delete" method:"POST"`
+	ID        uint `json:"id" binding:"required"`
 }
 
 type DeletePositionResponse struct {
@@ -36,7 +43,8 @@ type DeletePositionResponse struct {
 }
 
 type GetPositionRequest struct {
-	ID uint `json:"id" binding:"required"`
+	meta.Meta `path:"/api/position/get" method:"POST"`
+	ID        uint `json:"id" binding:"required"`
 }
 
 type GetPositionResponse struct {
@@ -49,12 +57,13 @@ type GetPositionResponse struct {
 }
 
 type ListPositionsRequest struct {
-	Page     int    `json:"page"`
-	PageSize int    `json:"page_size"`
-	Keyword  string `json:"keyword"`
+	meta.Meta `path:"/api/position/list" method:"POST"`
+	Page      int    `json:"page"`
+	PageSize  int    `json:"page_size"`
+	Keyword   string `json:"keyword"`
 }
 
 type ListPositionsResponse struct {
-	Total int64                `json:"total"`
+	Total int64                 `json:"total"`
 	List  []GetPositionResponse `json:"list"`
 }

@@ -16,14 +16,6 @@ type MemberController interface {
 	GetDepartmentMembers(ctx context.Context, req *v1.GetDepartmentMembersRequest) (*v1.GetDepartmentMembersResponse, error)
 }
 
-var MemberRoutes = di.Routes{
-	"AddMember":            {Method: "POST", Path: "/api/member/add"},
-	"RemoveMember":         {Method: "POST", Path: "/api/member/remove"},
-	"UpdateMember":         {Method: "POST", Path: "/api/member/update"},
-	"GetUserDepartments":   {Method: "POST", Path: "/api/member/get-user-departments"},
-	"GetDepartmentMembers": {Method: "POST", Path: "/api/member/get-department-members"},
-}
-
 var MemberGateway = di.NewGateway[MemberController]("member.controller")
 
 func GetMemberController() MemberController {

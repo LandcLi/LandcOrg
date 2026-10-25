@@ -24,8 +24,7 @@ const configTemplate = `
 server:
   addr: "127.0.0.1"
   port: 0
-  gin_mode: "test"
-  use_default_route: true
+  use_default_routes: true
 database:
   driver: "sqlite"
   dsn: "%s"
@@ -33,6 +32,9 @@ database:
 log:
   level: "error"
   output: "console"
+other:
+  server:
+    gin_mode: "test"
 `
 
 // setupSQLiteEnv 用临时目录中的 SQLite 完成一次完整初始化，返回 Org 配置。

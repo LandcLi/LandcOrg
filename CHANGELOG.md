@@ -3,6 +3,41 @@
 本文件记录 LandcOrg 的显著变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.1] - 2026-10-25
+
+修复三个「服务能起来、接口全哑」的严重缺陷，并升级到 `frame v0.8.6` / `api v0.5.1`。
+
+### 修复
+
+- **SDK 调用全线 404（严重）**。27 个请求结构体缺少 `meta.Meta` 路由声明，
+  而 `di.ProxyClient` 与 `web.RegisterHandler` 都只从该标签反射 path/method；
+  缺失时客户端回退到 `"/" + 小写方法名`，与真实路由（`/api/department/create`）不符。
+  表现为 SDK 调用必 404，服务端却看不到任何日志。现已为全部请求结构体补齐标签。
+- **独立部署时业务路由完全不注册（严重）**。`utility/config` 曾用私有
+  `gopkg.in/yaml.v2` 结构二次解析同一份配置，字段名写成了 `use_default_route`（单数），
+  而框架字段是 `use_default_routes`（复数）。重复解析后该值恒为 `false`，
+  业务路由静默不注册 —— `/health` 正常、任意 `/api/*` 都落到 NoRoute。
+  现改为**配置单一解析源**：`config.LoadConfig` 委托框架加载，`config.FromFramework`
+  只做纯映射，不再自持 yaml 结构。
+- **`/api/*` 错误响应统一返回 HTTP 200**：随 `api v0.5.1` 修复（框架日志中间件
+  吞掉状态码），参数校验失败现在正确返回 400。
+
+### 变更
+
+- **路由声明收敛为单一来源**：删除 5 张 `var XxxRoutes = di.Routes{...}` 路由表，
+  路由信息只存在于请求结构体的 `meta.Meta` 标签，服务端注册与 SDK 共用同一份声明，
+  杜绝「加了接口忘了同步路由表」的双写漂移。
+- `utility/config` 里的自定义 `other` 下钻逻辑替换为框架的
+  `GetOtherString` / `GetOtherBool`，`gopkg.in/yaml.v2` 从直接依赖中移除。
+
+### 测试
+
+- `tests/sqlite/sdk_contract_test.go`：用真实 `sdk.NewRemoteDepartmentController`
+  对 httptest 服务端往返，断言 path / method / 落库结果。此前 SDK 与路由表的
+  契约无任何测试覆盖，是 404 缺陷长期未被发现的原因。
+- `tests/sqlite/deploy_path_test.go`：按**部署配置模板**（框架字段名）走一遍
+  `InitDefault`，断言 27 条业务路由注册成功、空请求体返回 400 且不落库。
+
 ## [0.1.0] - 2026-10-25
 
 首个可发布版本。

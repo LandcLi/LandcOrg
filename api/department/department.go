@@ -17,15 +17,6 @@ type DepartmentController interface {
 	ListDepartments(ctx context.Context, req *v1.ListDepartmentsRequest) (*v1.ListDepartmentsResponse, error)
 }
 
-var DepartmentRoutes = di.Routes{
-	"CreateDepartment": {Method: "POST", Path: "/api/department/create"},
-	"UpdateDepartment": {Method: "POST", Path: "/api/department/update"},
-	"DeleteDepartment": {Method: "POST", Path: "/api/department/delete"},
-	"GetDepartment":    {Method: "POST", Path: "/api/department/get"},
-	"GetDepartmentTree": {Method: "POST", Path: "/api/department/tree"},
-	"ListDepartments":  {Method: "POST", Path: "/api/department/list"},
-}
-
 var DepartmentGateway = di.NewGateway[DepartmentController]("department.controller")
 
 func GetDepartmentController() DepartmentController {
