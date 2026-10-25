@@ -60,6 +60,10 @@ type DepartmentRoleDAO interface {
 	Revoke(departmentID uint, roleIDs []uint) error
 	GetRoleIDsByDepartmentID(departmentID uint) ([]uint, error)
 	GetRoleIDsByDepartmentIDs(departmentIDs []uint) ([]uint, error)
+	// DeleteByDepartmentID 删除某部门的全部角色绑定。
+	// 部门被删除时必须调用，否则残留绑定会让 getUserInheritedRoles 把已删部门的
+	// 角色继续算给用户，形成「部门没了、权限还在」的幽灵授权。
+	DeleteByDepartmentID(departmentID uint) error
 }
 
 func RegisterDepartmentRoleDAO(impl DepartmentRoleDAO) {

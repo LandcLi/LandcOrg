@@ -78,6 +78,16 @@ func (d *deptRoleDAOImpl) GetRoleIDsByDepartmentIDs(departmentIDs []uint) ([]uin
 	return roleIDs, err
 }
 
+// DeleteByDepartmentID 删除部门的全部角色绑定（部门删除时调用）。
+func (d *deptRoleDAOImpl) DeleteByDepartmentID(departmentID uint) error {
+	err := db.GetDB().Where("department_id = ?", departmentID).
+		Delete(&model.DepartmentRole{}).Error
+	if err == nil {
+		d.invalidateCache(departmentID)
+	}
+	return err
+}
+
 func (d *deptRoleDAOImpl) invalidateCache(departmentID uint) {
 	if db.GetRedis() == nil {
 		return
