@@ -9,13 +9,11 @@ import (
 	"github.com/LandcLi/LandcOrg/dao"
 	"github.com/LandcLi/LandcOrg/model"
 	"github.com/LandcLi/LandcOrg/utility/db"
-	"github.com/go-redis/redis/v8"
 )
 
-func init() { dao.RegisterMemberDAO(&memberDAOImpl{redisClient: db.GetRedis()}) }
+func init() { dao.RegisterMemberDAO(&memberDAOImpl{}) }
 
 type memberDAOImpl struct {
-	redisClient *redis.Client
 }
 
 func (d *memberDAOImpl) Create(m *model.OrgMember) error {
@@ -51,9 +49,9 @@ func (d *memberDAOImpl) GetByUserAndDept(userID, departmentID uint) (*model.OrgM
 
 func (d *memberDAOImpl) GetByUserID(userID uint) ([]model.OrgMember, error) {
 	// Try cache
-	if d.redisClient != nil {
+	if db.GetRedis() != nil {
 		cacheKey := fmt.Sprintf("member:user:%d", userID)
-		data, err := d.redisClient.Get(context.Background(), cacheKey).Bytes()
+		data, err := db.GetRedis().Get(context.Background(), cacheKey).Bytes()
 		if err == nil {
 			var members []model.OrgMember
 			if err := json.Unmarshal(data, &members); err == nil {
@@ -69,10 +67,10 @@ func (d *memberDAOImpl) GetByUserID(userID uint) ([]model.OrgMember, error) {
 	}
 
 	// Store in cache
-	if d.redisClient != nil {
+	if db.GetRedis() != nil {
 		cacheKey := fmt.Sprintf("member:user:%d", userID)
 		data, _ := json.Marshal(members)
-		d.redisClient.Set(context.Background(), cacheKey, data, 30*time.Minute)
+		db.GetRedis().Set(context.Background(), cacheKey, data, 30*time.Minute)
 	}
 
 	return members, nil
@@ -91,8 +89,8 @@ func (d *memberDAOImpl) GetByDepartmentID(departmentID uint, page, pageSize int)
 }
 
 func (d *memberDAOImpl) invalidateUserCache(userID uint) {
-	if d.redisClient == nil {
+	if db.GetRedis() == nil {
 		return
 	}
-	d.redisClient.Del(context.Background(), fmt.Sprintf("member:user:%d", userID))
+	db.GetRedis().Del(context.Background(), fmt.Sprintf("member:user:%d", userID))
 }

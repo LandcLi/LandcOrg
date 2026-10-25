@@ -1,15 +1,31 @@
+# LandcOrg 配置示例
+#
+# 快速开始（零外部依赖）：
+#   cp config.example.yml config.yaml
+#   go run ./cmd/api
+#
+# 切换到 MySQL（生产）：
+#   database:
+#     driver: "mysql"
+#     dsn: "root:password@tcp(127.0.0.1:3306)/landc_org?charset=utf8mb4&parseTime=True&loc=Local"
+#     auto_migrate: false        # 生产改由 sqls/init.sql 建表
+
 server:
-  port: ":8083"
+  # 监听地址：框架按 addr:port 组合（addr 为空时回落到 :8080）
+  addr: "0.0.0.0"
+  port: 8083
   gin_mode: "debug"
   enable_cors: true
   use_default_route: true
 
+# 数据库配置：默认 SQLite（纯 Go 驱动，无需 CGO / gcc / 外部服务）
 database:
-  driver: "mysql"
-  dsn: "root:password@tcp(127.0.0.1:3306)/landc_org?charset=utf8mb4&parseTime=True&loc=Local"
+  driver: "sqlite"
+  dsn: "data/landc_org.db"
+  # 开发/测试自动建表；生产环境（MySQL）请设为 false 并执行 sqls/init.sql
+  auto_migrate: true
 
-# Redis is optional. If not configured, the system works without caching.
-# Uncomment below to enable Redis caching for better performance.
+# Redis 可选：不配置时自动降级为进程内缓存（单实例可用）
 # redis:
 #   addr: "127.0.0.1:6379"
 #   password: ""

@@ -3,15 +3,10 @@ package sdk
 import (
 	"context"
 
-	"github.com/LandcLi/LandcOrg/api/department"
 	deptV1 "github.com/LandcLi/LandcOrg/api/department/v1"
-	"github.com/LandcLi/LandcOrg/api/invitation"
 	invV1 "github.com/LandcLi/LandcOrg/api/invitation/v1"
-	"github.com/LandcLi/LandcOrg/api/member"
 	memV1 "github.com/LandcLi/LandcOrg/api/member/v1"
-	orgRole "github.com/LandcLi/LandcOrg/api/org_role"
 	orgRoleV1 "github.com/LandcLi/LandcOrg/api/org_role/v1"
-	"github.com/LandcLi/LandcOrg/api/position"
 	posV1 "github.com/LandcLi/LandcOrg/api/position/v1"
 	"github.com/LandcLi/landc-go/frame/pkg/di"
 )
@@ -21,7 +16,7 @@ import (
 type RemoteDepartmentController struct{ client *di.ProxyClient }
 
 func NewRemoteDepartmentController(baseURL string, opts ...di.RemoteOption) *RemoteDepartmentController {
-	return &RemoteDepartmentController{client: di.NewProxyClient(baseURL, department.DepartmentRoutes, opts...)}
+	return &RemoteDepartmentController{client: di.NewProxyClient(baseURL, opts...)}
 }
 
 func (r *RemoteDepartmentController) CreateDepartment(ctx context.Context, req *deptV1.CreateDepartmentRequest) (*deptV1.CreateDepartmentResponse, error) {
@@ -48,7 +43,7 @@ func (r *RemoteDepartmentController) ListDepartments(ctx context.Context, req *d
 type RemotePositionController struct{ client *di.ProxyClient }
 
 func NewRemotePositionController(baseURL string, opts ...di.RemoteOption) *RemotePositionController {
-	return &RemotePositionController{client: di.NewProxyClient(baseURL, position.PositionRoutes, opts...)}
+	return &RemotePositionController{client: di.NewProxyClient(baseURL, opts...)}
 }
 
 func (r *RemotePositionController) CreatePosition(ctx context.Context, req *posV1.CreatePositionRequest) (*posV1.CreatePositionResponse, error) {
@@ -72,7 +67,7 @@ func (r *RemotePositionController) ListPositions(ctx context.Context, req *posV1
 type RemoteMemberController struct{ client *di.ProxyClient }
 
 func NewRemoteMemberController(baseURL string, opts ...di.RemoteOption) *RemoteMemberController {
-	return &RemoteMemberController{client: di.NewProxyClient(baseURL, member.MemberRoutes, opts...)}
+	return &RemoteMemberController{client: di.NewProxyClient(baseURL, opts...)}
 }
 
 func (r *RemoteMemberController) AddMember(ctx context.Context, req *memV1.AddMemberRequest) (*memV1.AddMemberResponse, error) {
@@ -96,7 +91,7 @@ func (r *RemoteMemberController) GetDepartmentMembers(ctx context.Context, req *
 type RemoteInvitationController struct{ client *di.ProxyClient }
 
 func NewRemoteInvitationController(baseURL string, opts ...di.RemoteOption) *RemoteInvitationController {
-	return &RemoteInvitationController{client: di.NewProxyClient(baseURL, invitation.InvitationRoutes, opts...)}
+	return &RemoteInvitationController{client: di.NewProxyClient(baseURL, opts...)}
 }
 
 func (r *RemoteInvitationController) CreateInvitation(ctx context.Context, req *invV1.CreateInvitationRequest) (*invV1.CreateInvitationResponse, error) {
@@ -117,7 +112,7 @@ func (r *RemoteInvitationController) ListInvitations(ctx context.Context, req *i
 type RemoteOrgRoleController struct{ client *di.ProxyClient }
 
 func NewRemoteOrgRoleController(baseURL string, opts ...di.RemoteOption) *RemoteOrgRoleController {
-	return &RemoteOrgRoleController{client: di.NewProxyClient(baseURL, orgRole.OrgRoleRoutes, opts...)}
+	return &RemoteOrgRoleController{client: di.NewProxyClient(baseURL, opts...)}
 }
 
 func (r *RemoteOrgRoleController) AssignDepartmentRoles(ctx context.Context, req *orgRoleV1.AssignDepartmentRolesRequest) (*orgRoleV1.AssignDepartmentRolesResponse, error) {

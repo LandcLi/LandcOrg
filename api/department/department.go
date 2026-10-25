@@ -26,7 +26,7 @@ var DepartmentRoutes = di.Routes{
 	"ListDepartments":  {Method: "POST", Path: "/api/department/list"},
 }
 
-var DepartmentGateway = di.NewGateway[DepartmentController]("department.controller", DepartmentRoutes)
+var DepartmentGateway = di.NewGateway[DepartmentController]("department.controller")
 
 func GetDepartmentController() DepartmentController {
 	return DepartmentGateway.Get()

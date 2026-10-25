@@ -1,20 +1,32 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	landcorg "github.com/LandcLi/LandcOrg"
 )
 
 func main() {
-	server, err := landcorg.InitDefault("config.yml")
-	if err != nil {
-		log.Fatalf("Failed to initialize: %v", err)
+	// 支持自定义配置路径：LANDC_CONFIG=./prod.yaml
+	configPath := os.Getenv("LANDC_CONFIG")
+	if configPath == "" {
+		configPath = "config.yaml"
 	}
 
-	fmt.Println("LandcOrg starting on :8083")
-	if err := server.Run(); err != nil {
-		log.Fatalf("Server stopped with error: %v", err)
+	server, err := landcorg.InitDefault(configPath)
+	if err != nil {
+		log.Fatalf("LandcOrg 初始化失败: %v", err)
+	}
+
+	// 优雅停机：收到 SIGINT/SIGTERM 后等待在途请求完成
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	if err := server.RunWithContext(ctx); err != nil {
+		log.Fatalf("LandcOrg 运行失败: %v", err)
 	}
 }

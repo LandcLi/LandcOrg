@@ -9,13 +9,11 @@ import (
 	"github.com/LandcLi/LandcOrg/dao"
 	"github.com/LandcLi/LandcOrg/model"
 	"github.com/LandcLi/LandcOrg/utility/db"
-	"github.com/go-redis/redis/v8"
 )
 
-func init() { dao.RegisterDepartmentRoleDAO(&deptRoleDAOImpl{redisClient: db.GetRedis()}) }
+func init() { dao.RegisterDepartmentRoleDAO(&deptRoleDAOImpl{}) }
 
 type deptRoleDAOImpl struct {
-	redisClient *redis.Client
 }
 
 func (d *deptRoleDAOImpl) Assign(departmentID uint, roleIDs []uint) error {
@@ -40,9 +38,9 @@ func (d *deptRoleDAOImpl) Revoke(departmentID uint, roleIDs []uint) error {
 }
 
 func (d *deptRoleDAOImpl) GetRoleIDsByDepartmentID(departmentID uint) ([]uint, error) {
-	if d.redisClient != nil {
+	if db.GetRedis() != nil {
 		cacheKey := fmt.Sprintf("dept_roles:%d", departmentID)
-		data, err := d.redisClient.Get(context.Background(), cacheKey).Bytes()
+		data, err := db.GetRedis().Get(context.Background(), cacheKey).Bytes()
 		if err == nil {
 			var roleIDs []uint
 			if err := json.Unmarshal(data, &roleIDs); err == nil {
@@ -59,10 +57,10 @@ func (d *deptRoleDAOImpl) GetRoleIDsByDepartmentID(departmentID uint) ([]uint, e
 		return nil, err
 	}
 
-	if d.redisClient != nil {
+	if db.GetRedis() != nil {
 		cacheKey := fmt.Sprintf("dept_roles:%d", departmentID)
 		data, _ := json.Marshal(roleIDs)
-		d.redisClient.Set(context.Background(), cacheKey, data, 30*time.Minute)
+		db.GetRedis().Set(context.Background(), cacheKey, data, 30*time.Minute)
 	}
 
 	return roleIDs, nil
@@ -81,8 +79,8 @@ func (d *deptRoleDAOImpl) GetRoleIDsByDepartmentIDs(departmentIDs []uint) ([]uin
 }
 
 func (d *deptRoleDAOImpl) invalidateCache(departmentID uint) {
-	if d.redisClient == nil {
+	if db.GetRedis() == nil {
 		return
 	}
-	d.redisClient.Del(context.Background(), fmt.Sprintf("dept_roles:%d", departmentID))
+	db.GetRedis().Del(context.Background(), fmt.Sprintf("dept_roles:%d", departmentID))
 }

@@ -35,83 +35,81 @@
 
 ## 技术栈
 
-- **框架**: landc-go/mvc（DI / Gateway / Web）
-- **Web框架**: Gin
-- **数据库**: MySQL (GORM)
-- **缓存**: Redis
-- **日志**: landc-go/log
-- **API规范**: landc-go/api
+- **框架**：`github.com/LandcLi/landc-go/frame`（配置 / DB / 缓存 / JWT / DI / Web / 健康检查）
+- **Web**：Gin
+- **数据库**：SQLite（默认，纯 Go 驱动，零外部依赖）或 MySQL（生产）
+- **缓存**：Redis（可选；缺失时降级为进程内 LRU）
+- **日志**：`landc-go/log`
 
 ## 项目结构
 
 ```
 LandcOrg/
-├── api/                        # API接口定义
-│   ├── department/             # 部门管理接口
-│   ├── position/               # 岗位管理接口
-│   ├── member/                 # 成员管理接口
-│   ├── invitation/             # 邀请管理接口
-│   └── org_role/               # 组织-角色绑定接口
-├── dao/                        # 数据访问层接口
-├── internal/                   # 内部实现（可通过 DI Override 替换）
-│   ├── controller/             # 控制器层
-│   ├── dao_impl/              # DAO实现层
-│   └── service_impl/          # 服务实现层
-├── model/                      # 数据模型
-├── sdk/                        # HTTP SDK（远程调用）
-├── service/                    # 服务层接口
-├── sqls/                       # SQL脚本
-├── utility/                    # 工具包
-│   ├── config/                # 配置管理
-│   ├── db/                    # 数据库连接
-│   └── logger/                # 日志管理
-├── cmd/api/main.go            # 独立运行入口
-└── LandcOrg.go                 # 主入口文件（支持嵌入集成）
+├── api/                        接口定义 + 路由表（department / position / member / invitation / org_role）
+├── dao/                        数据访问接口
+├── internal/                   内部实现（可通过 DI Override 替换）
+│   ├── controller/
+│   ├── dao_impl/
+│   └── service_impl/
+├── model/                      数据模型（部门 / 岗位 / 成员 / 邀请 / 角色绑定）
+├── sdk/                        HTTP SDK（远程调用）
+├── service/                    服务接口
+├── sqls/                       MySQL 初始化脚本
+├── tests/sqlite/               SQLite 端到端冒烟
+├── utility/                    配置 / 日志（DB 与缓存委托给框架）
+├── cmd/api/main.go             独立运行入口
+└── LandcOrg.go                 库入口（InitDefault / InitWithConfig / InitWithConfigAndGin）
 ```
 
 ## 快速开始
 
-### 1. 初始化数据库
+### 1. 准备配置并启动
+
+```bash
+cp config.example.yml config.yaml
+go run ./cmd/api
+```
+
+默认使用 SQLite，首次启动自动在 `data/landc_org.db` 建表
+（`database.auto_migrate: true`），无需 MySQL / Redis。
+
+```bash
+curl http://127.0.0.1:8083/health
+```
+
+创建部门：
+
+```bash
+curl -X POST http://127.0.0.1:8083/api/department/create \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"研发中心","code":"rd","description":"默认部门"}'
+```
+
+### 2. 切换到 MySQL（生产）
+
+```yaml
+database:
+  driver: "mysql"
+  dsn: "root:password@tcp(127.0.0.1:3306)/landc_org?charset=utf8mb4&parseTime=True&loc=Local"
+  auto_migrate: false
+```
 
 ```bash
 mysql -u root -p < sqls/init.sql
 ```
 
-### 2. 配置文件
-
-```bash
-cp config.example.yml config.yml
-# 修改数据库、Redis等配置
-```
-
-### 3. 独立运行
+### 3. 嵌入到其他系统（库模式）
 
 ```go
-package main
+// 方式一：使用独立 Server（含中间件与路由）
+server, err := landcorg.InitDefault("config.yaml")
 
-import (
-    "fmt"
-    "log"
-    landcorg "github.com/LandcLi/LandcOrg"
-)
-
-func main() {
-    engine, err := landcorg.InitDefault("config.yml")
-    if err != nil {
-        log.Fatalf("Failed to initialize: %v", err)
-    }
-    fmt.Println("LandcOrg starting on :8083")
-    engine.Run(":8083")
-}
-```
-
-### 4. 嵌入到其他系统
-
-```go
-// 本地集成模式
-orgCfg := &config.Config{...}
+// 方式二：挂到宿主已有的 gin 引擎（不自带中间件链，由宿主决定）
 landcorg.InitWithConfigAndGin(orgCfg, ginEngine)
 ```
+
+库模式只注册控制器，不会创建 engine、不会调用 `Run`，宿主可继续追加自有路由。
+
 
 ## 使用 SDK（远程调用模式）
 

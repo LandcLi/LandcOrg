@@ -24,7 +24,7 @@ var MemberRoutes = di.Routes{
 	"GetDepartmentMembers": {Method: "POST", Path: "/api/member/get-department-members"},
 }
 
-var MemberGateway = di.NewGateway[MemberController]("member.controller", MemberRoutes)
+var MemberGateway = di.NewGateway[MemberController]("member.controller")
 
 func GetMemberController() MemberController {
 	return MemberGateway.Get()

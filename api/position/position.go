@@ -24,7 +24,7 @@ var PositionRoutes = di.Routes{
 	"ListPositions":  {Method: "POST", Path: "/api/position/list"},
 }
 
-var PositionGateway = di.NewGateway[PositionController]("position.controller", PositionRoutes)
+var PositionGateway = di.NewGateway[PositionController]("position.controller")
 
 func GetPositionController() PositionController {
 	return PositionGateway.Get()

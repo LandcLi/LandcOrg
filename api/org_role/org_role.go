@@ -28,7 +28,7 @@ var OrgRoleRoutes = di.Routes{
 	"GetUserInheritedRoles": {Method: "POST", Path: "/api/org-role/get-user-inherited-roles"},
 }
 
-var OrgRoleGateway = di.NewGateway[OrgRoleController]("org_role.controller", OrgRoleRoutes)
+var OrgRoleGateway = di.NewGateway[OrgRoleController]("org_role.controller")
 
 func GetOrgRoleController() OrgRoleController {
 	return OrgRoleGateway.Get()

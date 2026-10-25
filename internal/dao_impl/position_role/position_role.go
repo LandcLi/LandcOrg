@@ -9,13 +9,11 @@ import (
 	"github.com/LandcLi/LandcOrg/dao"
 	"github.com/LandcLi/LandcOrg/model"
 	"github.com/LandcLi/LandcOrg/utility/db"
-	"github.com/go-redis/redis/v8"
 )
 
-func init() { dao.RegisterPositionRoleDAO(&posRoleDAOImpl{redisClient: db.GetRedis()}) }
+func init() { dao.RegisterPositionRoleDAO(&posRoleDAOImpl{}) }
 
 type posRoleDAOImpl struct {
-	redisClient *redis.Client
 }
 
 func (d *posRoleDAOImpl) Assign(positionID uint, roleIDs []uint) error {
@@ -40,9 +38,9 @@ func (d *posRoleDAOImpl) Revoke(positionID uint, roleIDs []uint) error {
 }
 
 func (d *posRoleDAOImpl) GetRoleIDsByPositionID(positionID uint) ([]uint, error) {
-	if d.redisClient != nil {
+	if db.GetRedis() != nil {
 		cacheKey := fmt.Sprintf("pos_roles:%d", positionID)
-		data, err := d.redisClient.Get(context.Background(), cacheKey).Bytes()
+		data, err := db.GetRedis().Get(context.Background(), cacheKey).Bytes()
 		if err == nil {
 			var roleIDs []uint
 			if err := json.Unmarshal(data, &roleIDs); err == nil {
@@ -59,10 +57,10 @@ func (d *posRoleDAOImpl) GetRoleIDsByPositionID(positionID uint) ([]uint, error)
 		return nil, err
 	}
 
-	if d.redisClient != nil {
+	if db.GetRedis() != nil {
 		cacheKey := fmt.Sprintf("pos_roles:%d", positionID)
 		data, _ := json.Marshal(roleIDs)
-		d.redisClient.Set(context.Background(), cacheKey, data, 30*time.Minute)
+		db.GetRedis().Set(context.Background(), cacheKey, data, 30*time.Minute)
 	}
 
 	return roleIDs, nil
@@ -81,8 +79,8 @@ func (d *posRoleDAOImpl) GetRoleIDsByPositionIDs(positionIDs []uint) ([]uint, er
 }
 
 func (d *posRoleDAOImpl) invalidateCache(positionID uint) {
-	if d.redisClient == nil {
+	if db.GetRedis() == nil {
 		return
 	}
-	d.redisClient.Del(context.Background(), fmt.Sprintf("pos_roles:%d", positionID))
+	db.GetRedis().Del(context.Background(), fmt.Sprintf("pos_roles:%d", positionID))
 }

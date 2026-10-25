@@ -22,7 +22,7 @@ var InvitationRoutes = di.Routes{
 	"ListInvitations":  {Method: "POST", Path: "/api/invitation/list"},
 }
 
-var InvitationGateway = di.NewGateway[InvitationController]("invitation.controller", InvitationRoutes)
+var InvitationGateway = di.NewGateway[InvitationController]("invitation.controller")
 
 func GetInvitationController() InvitationController {
 	return InvitationGateway.Get()

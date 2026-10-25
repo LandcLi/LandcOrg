@@ -9,13 +9,11 @@ import (
 	"github.com/LandcLi/LandcOrg/dao"
 	"github.com/LandcLi/LandcOrg/model"
 	"github.com/LandcLi/LandcOrg/utility/db"
-	"github.com/go-redis/redis/v8"
 )
 
-func init() { dao.RegisterDepartmentDAO(&deptDAOImpl{redisClient: db.GetRedis()}) }
+func init() { dao.RegisterDepartmentDAO(&deptDAOImpl{}) }
 
 type deptDAOImpl struct {
-	redisClient *redis.Client
 }
 
 func (d *deptDAOImpl) Create(dept *model.Department) error { return db.GetDB().Create(dept).Error }
@@ -29,7 +27,7 @@ func (d *deptDAOImpl) Update(dept *model.Department) error {
 }
 
 func (d *deptDAOImpl) Delete(id uint) error {
-	if d.redisClient != nil {
+	if db.GetRedis() != nil {
 		if dept, err := d.GetByID(id); err == nil {
 			defer d.invalidateCache(dept.ID, dept.Code)
 		}
@@ -38,9 +36,9 @@ func (d *deptDAOImpl) Delete(id uint) error {
 }
 
 func (d *deptDAOImpl) GetByID(id uint) (*model.Department, error) {
-	if d.redisClient != nil {
+	if db.GetRedis() != nil {
 		cacheKey := fmt.Sprintf("dept:id:%d", id)
-		data, err := d.redisClient.Get(context.Background(), cacheKey).Bytes()
+		data, err := db.GetRedis().Get(context.Background(), cacheKey).Bytes()
 		if err == nil {
 			var dept model.Department
 			if err := json.Unmarshal(data, &dept); err == nil {
@@ -55,19 +53,19 @@ func (d *deptDAOImpl) GetByID(id uint) (*model.Department, error) {
 		return nil, err
 	}
 
-	if d.redisClient != nil {
+	if db.GetRedis() != nil {
 		cacheKey := fmt.Sprintf("dept:id:%d", id)
 		data, _ := json.Marshal(dept)
-		d.redisClient.Set(context.Background(), cacheKey, data, time.Hour)
+		db.GetRedis().Set(context.Background(), cacheKey, data, time.Hour)
 	}
 
 	return &dept, nil
 }
 
 func (d *deptDAOImpl) GetByCode(code string) (*model.Department, error) {
-	if d.redisClient != nil {
+	if db.GetRedis() != nil {
 		cacheKey := fmt.Sprintf("dept:code:%s", code)
-		data, err := d.redisClient.Get(context.Background(), cacheKey).Bytes()
+		data, err := db.GetRedis().Get(context.Background(), cacheKey).Bytes()
 		if err == nil {
 			var dept model.Department
 			if err := json.Unmarshal(data, &dept); err == nil {
@@ -82,10 +80,10 @@ func (d *deptDAOImpl) GetByCode(code string) (*model.Department, error) {
 		return nil, err
 	}
 
-	if d.redisClient != nil {
+	if db.GetRedis() != nil {
 		cacheKey := fmt.Sprintf("dept:code:%s", code)
 		data, _ := json.Marshal(dept)
-		d.redisClient.Set(context.Background(), cacheKey, data, time.Hour)
+		db.GetRedis().Set(context.Background(), cacheKey, data, time.Hour)
 	}
 
 	return &dept, nil
@@ -122,12 +120,12 @@ func (d *deptDAOImpl) List(page, pageSize int, parentID *uint, keyword string) (
 }
 
 func (d *deptDAOImpl) invalidateCache(id uint, code string) {
-	if d.redisClient == nil {
+	if db.GetRedis() == nil {
 		return
 	}
 	ctx := context.Background()
-	d.redisClient.Del(ctx, fmt.Sprintf("dept:id:%d", id))
+	db.GetRedis().Del(ctx, fmt.Sprintf("dept:id:%d", id))
 	if code != "" {
-		d.redisClient.Del(ctx, fmt.Sprintf("dept:code:%s", code))
+		db.GetRedis().Del(ctx, fmt.Sprintf("dept:code:%s", code))
 	}
 }
