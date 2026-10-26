@@ -116,3 +116,59 @@ func TestMemberListAvoidsNPlusOne(t *testing.T) {
 		t.Errorf("GetUserDepartments 产生 %d 次 SELECT，疑似 N+1（期望 ≤3）", counter.selects)
 	}
 }
+
+// TestDepartmentMembersFillsNames 验证「按部门查成员」也回填部门名与岗位名。
+//
+// 历史缺陷：GetDepartmentMembers 只预取了岗位名，DepartmentName 一直是空串；
+// 而同一文件里的 GetUserDepartments 是有值的。同一个字段在两个接口表现不一致，
+// 前端拿到空部门名只能自己再查一次，等于把 N+1 推给了调用方。
+func TestDepartmentMembersFillsNames(t *testing.T) {
+	cfg := setupSQLiteEnv(t)
+
+	if _, err := landcorg.InitWithConfig(cfg); err != nil {
+		t.Fatalf("InitWithConfig: %v", err)
+	}
+
+	db := framedb.GetDB()
+	counter := &countingLogger{Interface: db.Logger}
+	db.Logger = counter
+
+	dept := &model.Department{Name: "技术部", Code: "dept_tech"}
+	if err := db.Create(dept).Error; err != nil {
+		t.Fatalf("create department: %v", err)
+	}
+	pos := &model.Position{Name: "后端工程师", Code: "pos_be"}
+	if err := db.Create(pos).Error; err != nil {
+		t.Fatalf("create position: %v", err)
+	}
+	for _, uid := range []uint{101, 102, 103} {
+		m := &model.OrgMember{UserID: uid, DepartmentID: dept.ID, PositionID: pos.ID}
+		if err := db.Create(m).Error; err != nil {
+			t.Fatalf("create member: %v", err)
+		}
+	}
+
+	counter.selects = 0
+	infos, total, err := service.GetMemberService().GetDepartmentMembers(dept.ID, 1, 20)
+	if err != nil {
+		t.Fatalf("GetDepartmentMembers: %v", err)
+	}
+	if total != 3 || len(infos) != 3 {
+		t.Fatalf("成员数 = %d (total=%d), want 3", len(infos), total)
+	}
+
+	for _, info := range infos {
+		if info.DepartmentName != "技术部" {
+			t.Errorf("user %d 的 DepartmentName = %q, want 技术部", info.UserID, info.DepartmentName)
+		}
+		if info.PositionName != "后端工程师" {
+			t.Errorf("user %d 的 PositionName = %q, want 后端工程师", info.UserID, info.PositionName)
+		}
+	}
+
+	// 3 个成员应只产生常数次查询（count + 成员 + 部门 IN + 岗位 IN），
+	// 若退回 N+1 会随成员数线性增长。
+	if counter.selects > 5 {
+		t.Errorf("GetDepartmentMembers 产生 %d 次 SELECT，疑似 N+1（期望 ≤5）", counter.selects)
+	}
+}

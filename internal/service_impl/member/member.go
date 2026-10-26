@@ -98,13 +98,20 @@ func (s *memberServiceImpl) GetDepartmentMembers(departmentID uint, page, pageSi
 		return nil, 0, err
 	}
 
-	// 批量预取岗位名，消除 N+1。
+	// 批量预取部门名与岗位名，消除 N+1。
+	//
+	// department_name 曾漏掉回填：只预取了岗位名，DepartmentName 一直是空串，
+	// 而同一个文件里的 GetUserDepartments 是有值的 —— 同一个字段在两个接口
+	// 表现不一致，前端拿到空部门名只能自己再查一次。
+	deptIDs := make([]uint, 0, len(members))
 	posIDs := make([]uint, 0, len(members))
 	for _, m := range members {
+		deptIDs = append(deptIDs, m.DepartmentID)
 		if m.PositionID > 0 {
 			posIDs = append(posIDs, m.PositionID)
 		}
 	}
+	deptNames := departmentNameMap(deptIDs)
 	posNames := positionNameMap(posIDs)
 
 	result := make([]v1.MemberInfo, 0, len(members))
@@ -116,6 +123,7 @@ func (s *memberServiceImpl) GetDepartmentMembers(departmentID uint, page, pageSi
 			IsLeader:     m.IsLeader,
 			JoinedAt:     m.JoinedAt,
 		}
+		info.DepartmentName = deptNames[m.DepartmentID]
 		if m.PositionID > 0 {
 			info.PositionName = posNames[m.PositionID]
 		}
