@@ -14,6 +14,7 @@ import (
 
 	"github.com/LandcLi/LandcOrg/api"
 	_ "github.com/LandcLi/LandcOrg/internal" // 触发默认实现注册（DI）
+	"github.com/LandcLi/LandcOrg/internal/middleware"
 	"github.com/LandcLi/LandcOrg/model"
 	"github.com/LandcLi/LandcOrg/utility/config"
 	"github.com/LandcLi/LandcOrg/utility/logger"
@@ -51,6 +52,13 @@ func InitWithConfig(cfg *config.Config) (*web.Server, error) {
 	// api 层中间件（trace / 请求日志等）
 	engine.Use(apiMiddleware.GinMiddleware())
 	ginLogger.UseWithGin(engine, logger.GetLogger())
+
+	// 鉴权：JWT 或内部服务密钥。
+	//
+	// 此前这里漏了这一行，导致全部组织管理接口裸奔（无 token 即可建部门、加成员、
+	// 分配角色）。同为内网服务的 LandcPermission 一直挂着框架 middleware.Auth()，
+	// 本系统属于遗漏。健康检查端点由框架默认跳过，无需额外配置。
+	engine.Use(middleware.Auth())
 
 	if cfg.Server.UseDefaultRoute {
 		if err := api.RegisterDefaultRoutes(server); err != nil {

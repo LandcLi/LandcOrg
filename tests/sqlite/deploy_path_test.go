@@ -19,6 +19,9 @@ import (
 
 // deployConfigTemplate 按框架文档的字段名书写（server.use_default_routes），
 // 模拟用户照着 config.example.yml 配置的真实情况。
+//
+// service_auth.key 是本系统鉴权的服务间调用凭证：测试用它证明「内部服务能进、
+// 外部匿名不能进」。jwt.secret 用固定测试值。
 const deployConfigTemplate = `
 server:
   addr: "127.0.0.1"
@@ -28,13 +31,37 @@ database:
   driver: "sqlite"
   dsn: "%s"
   auto_migrate: true
+jwt:
+  secret: "test-only-secret-at-least-32-characters-long"
+  issuer: "landc-org-test"
 log:
   level: "error"
   output: "console"
 other:
   server:
     gin_mode: "test"
+  service_auth:
+    key: "%s"
 `
+
+// testServiceKey 是测试用的服务间凭证。
+const testServiceKey = "test-service-key-for-e2e"
+
+// postAsService 以内部服务身份发起请求（带 X-Service-Key）。
+func postAsService(t *testing.T, url, body string) *http.Response {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodPost, url, strings.NewReader(body))
+	if err != nil {
+		t.Fatalf("new request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Service-Key", testServiceKey)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("post: %v", err)
+	}
+	return resp
+}
 
 // TestInitDefaultRegistersBusinessRoutes 锁定「独立部署路径」的行为。
 //
@@ -50,7 +77,7 @@ func TestInitDefaultRegistersBusinessRoutes(t *testing.T) {
 	dbPath := filepath.Join(dir, "data", "org.db")
 	cfgPath := filepath.Join(dir, "config.yaml")
 
-	if err := os.WriteFile(cfgPath, []byte(fmt.Sprintf(deployConfigTemplate, filepath.ToSlash(dbPath))), 0o644); err != nil {
+	if err := os.WriteFile(cfgPath, []byte(fmt.Sprintf(deployConfigTemplate, filepath.ToSlash(dbPath), testServiceKey)), 0o644); err != nil {
 		t.Fatalf("write config: %v", err)
 	}
 	// InitDefault 内部走 InitGlobalConfigWithPath（once 语义），若全局配置已被前序
@@ -84,11 +111,7 @@ func TestInitDefaultRegistersBusinessRoutes(t *testing.T) {
 	srv := httptest.NewServer(server.Engine())
 	defer srv.Close()
 
-	resp, err := http.Post(srv.URL+"/api/department/create", "application/json",
-		strings.NewReader(`{"name":"研发中心","code":"rd"}`))
-	if err != nil {
-		t.Fatalf("post: %v", err)
-	}
+	resp := postAsService(t, srv.URL+"/api/department/create", `{"name":"研发中心","code":"rd"}`)
 	defer resp.Body.Close()
 	raw, _ := io.ReadAll(resp.Body)
 
@@ -122,7 +145,7 @@ func TestInvalidRequestRejected(t *testing.T) {
 	dir := t.TempDir()
 	dbPath := filepath.Join(dir, "data", "org.db")
 	cfgPath := filepath.Join(dir, "config.yaml")
-	if err := os.WriteFile(cfgPath, []byte(fmt.Sprintf(deployConfigTemplate, filepath.ToSlash(dbPath))), 0o644); err != nil {
+	if err := os.WriteFile(cfgPath, []byte(fmt.Sprintf(deployConfigTemplate, filepath.ToSlash(dbPath), testServiceKey)), 0o644); err != nil {
 		t.Fatalf("write config: %v", err)
 	}
 	resetFramework(t, cfgPath)
@@ -135,10 +158,7 @@ func TestInvalidRequestRejected(t *testing.T) {
 	srv := httptest.NewServer(server.Engine())
 	defer srv.Close()
 
-	resp, err := http.Post(srv.URL+"/api/department/create", "application/json", strings.NewReader(`{}`))
-	if err != nil {
-		t.Fatalf("post: %v", err)
-	}
+	resp := postAsService(t, srv.URL+"/api/department/create", `{}`)
 	defer resp.Body.Close()
 	raw, _ := io.ReadAll(resp.Body)
 
@@ -146,5 +166,73 @@ func TestInvalidRequestRejected(t *testing.T) {
 		var count int64
 		_ = framedb.GetDB().Model(&landcorgModel.Department{}).Count(&count).Error
 		t.Fatalf("空请求体应被拒绝，实际 HTTP %d，响应 %s，部门记录数 %d", resp.StatusCode, raw, count)
+	}
+}
+
+// TestUnauthenticatedRejected 守住「本系统必须有鉴权」这个不变量。
+//
+// 历史缺陷：InitWithConfig 曾只挂 trace 与日志中间件，漏了鉴权 —— 任何人只要
+// 知道地址就能创建部门、添加成员、分配组织角色。同为内网服务的
+// LandcPermission 一直挂着框架 middleware.Auth()，本系统属于遗漏。
+//
+// 本用例无凭证请求，必须 401；同时用健康检查证明探针不受影响。
+func TestUnauthenticatedRejected(t *testing.T) {
+	dir := t.TempDir()
+	dbPath := filepath.Join(dir, "data", "org.db")
+	cfgPath := filepath.Join(dir, "config.yaml")
+	if err := os.WriteFile(cfgPath, []byte(fmt.Sprintf(deployConfigTemplate, filepath.ToSlash(dbPath), testServiceKey)), 0o644); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+	resetFramework(t, cfgPath)
+	t.Cleanup(func() { _ = framedb.Close() })
+
+	server, err := landcorg.InitDefault(cfgPath)
+	if err != nil {
+		t.Fatalf("InitDefault: %v", err)
+	}
+	srv := httptest.NewServer(server.Engine())
+	defer srv.Close()
+
+	// 1. 无任何凭证的业务请求必须被拒绝
+	resp, err := http.Post(srv.URL+"/api/department/create", "application/json",
+		strings.NewReader(`{"name":"越权部门","code":"hacked"}`))
+	if err != nil {
+		t.Fatalf("post: %v", err)
+	}
+	defer resp.Body.Close()
+	raw, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("无凭证请求应返回 401，实际 HTTP %d，响应 %s", resp.StatusCode, raw)
+	}
+
+	// 2. 错误的服务密钥同样必须被拒绝（不能只看头是否存在）
+	req, _ := http.NewRequest(http.MethodPost, srv.URL+"/api/department/create",
+		strings.NewReader(`{"name":"越权部门","code":"hacked2"}`))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Service-Key", "wrong-key")
+	badResp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("post with wrong key: %v", err)
+	}
+	defer badResp.Body.Close()
+	if badResp.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("错误服务密钥应返回 401，实际 HTTP %d", badResp.StatusCode)
+	}
+
+	// 3. 健康检查不受鉴权影响（否则 k8s 探针永远失败）
+	healthResp, err := http.Get(srv.URL + "/health")
+	if err != nil {
+		t.Fatalf("health: %v", err)
+	}
+	defer healthResp.Body.Close()
+	if healthResp.StatusCode != http.StatusOK {
+		t.Fatalf("健康检查应返回 200，实际 HTTP %d", healthResp.StatusCode)
+	}
+
+	// 4. 越权请求不能落库
+	var count int64
+	_ = framedb.GetDB().Model(&landcorgModel.Department{}).Count(&count).Error
+	if count != 0 {
+		t.Fatalf("被鉴权拦截的请求不应写入数据，实际部门记录数 %d", count)
 	}
 }

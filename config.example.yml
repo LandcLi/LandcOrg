@@ -44,6 +44,30 @@ log:
   level: "debug"
   output: "console"
 
+# JWT 配置（鉴权中间件校验 Bearer Token 用；secret 长度必须 >= 32 字符）
+#
+# 本系统已启用鉴权：除健康检查外的接口都要求有效 JWT。
+# secret 必须与签发方（LandcSSO / LandcUserManager）一致，否则令牌一律判为无效。
+jwt:
+  secret: "replace-with-a-strong-secret-key-at-least-32-chars"
+  issuer: "landc-org"
+
+# 其他业务配置
+other:
+  server:
+    gin_mode: "debug"
+
+  # 服务间调用凭证
+  #
+  # LandcPermission 需要按 user_id 查询用户从部门/岗位继承的角色，那是服务间调用，
+  # 没有用户 token。配置共享密钥后，携带 X-Service-Key 的内部服务请求直接放行；
+  # 外部客户端没有这个密钥，仍必须带 JWT。
+  #
+  # 留空表示不启用 —— 此时所有非公开路径一律要求 JWT（漏配只会更严格）。
+  # 该值必须与 LandcPermission 的 other.org_service.service_key 完全一致。
+  service_auth:
+    key: ""
+
 # 框架未定义的业务自定义配置放在 other 段，本系统按路径读取
 other:
   server:
