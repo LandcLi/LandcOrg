@@ -10,7 +10,6 @@ import (
 	frameconfig "github.com/LandcLi/landc-go/frame/pkg/config"
 	framedb "github.com/LandcLi/landc-go/frame/pkg/db"
 	"github.com/LandcLi/landc-go/frame/pkg/web"
-	ginLogger "github.com/LandcLi/landc-go/log/adapter/gin"
 
 	"github.com/LandcLi/LandcOrg/api"
 	_ "github.com/LandcLi/LandcOrg/internal" // 触发默认实现注册（DI）
@@ -49,9 +48,13 @@ func InitWithConfig(cfg *config.Config) (*web.Server, error) {
 		return nil, err
 	}
 
-	// api 层中间件（trace / 请求日志等）
+	// api 层中间件（trace / 统一响应包装）
+	//
+	// 访问日志已由框架 web.NewServer 统一挂载（结构化字段 + trace_id），
+	// 这里不再重复挂 ginLogger —— 之前两处并存，且本系统用的 logger 实例
+	// 与框架的全局实例不是同一个，导致实际只有 gin 原生的 [GIN] 日志在输出，
+	// 而那份日志不含 trace_id。
 	engine.Use(apiMiddleware.GinMiddleware())
-	ginLogger.UseWithGin(engine, logger.GetLogger())
 
 	// 鉴权：JWT 或内部服务密钥。
 	//
